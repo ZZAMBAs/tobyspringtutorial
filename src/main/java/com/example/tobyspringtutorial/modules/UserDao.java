@@ -1,93 +1,32 @@
 package com.example.tobyspringtutorial.modules;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.RowMapper;
 
 import javax.sql.DataSource;
 import java.sql.*;
 
-abstract public class UserDao {
-    // private ConnectionMaker connectionMaker;
+public class UserDao {
     private DataSource dataSource;
-    private JdbcContext jdbcContext;
-
-    /*public UserDao(ConnectionMaker connectionMaker){
-        this.connectionMaker = connectionMaker;
-    }*/
+    private JdbcTemplate jdbcTemplate; // 스프링서 직접 지원하는 JDBC 코드용 기본 템플릿. 직접 만든 jdbcContext와 역할이 동일.
 
     public void setDataSource(DataSource dataSource){
         this.dataSource = dataSource;
-
-        //이부분부터는 JdbcContext 수동 DI (스프링 DI 아님)를 위한 코드. 수동 DI는 스프링 DI / 빈이 아니므로 싱글톤이 될 수 없다.
-        jdbcContext = new JdbcContext();
-        jdbcContext.setDataSource(dataSource);
-        // 이부분까지
+        jdbcTemplate = new JdbcTemplate(dataSource);
     }
-
-    /*public void setJdbcContext(JdbcContext jdbcContext){ // 인터페이스가 아닌 구체 클래스를 DI 받고있다.
-        this.jdbcContext = jdbcContext;
-    }*/ // 스프링 DI를 이용할 때를 위한 코드
 
     public void add(User user) throws SQLException {
-        Connection c = null;
-        PreparedStatement ps = null;
-        try {
-            c = dataSource.getConnection();
-
-            ps = c.prepareStatement("insert into users values(?, ?, ?)");
-            ps.setString(1, user.getId());
-            ps.setString(2, user.getUserName());
-            ps.setString(3, user.getPassword());
-
-            ps.executeUpdate();
-        }catch (SQLException e){ throw e; }
-        finally {
-            if (ps != null) try{ ps.close(); } catch (SQLException e) {}
-            if (c != null) try{ c.close(); } catch (SQLException e) {}
-        }
-    }
-
-    public void addByS(User user) throws SQLException { // 전략 패턴을 이용한 add
-        StatementStrategy st = new AddStatement(user);
-        jdbcContext.workWithStatementStrategy(st);
-    }
-
-    public void addByS_localClassUsed(final User user) throws SQLException { // 로컬(내부) 클래스를 이용한 전략 패턴.
-        // 로컬 클래스는 해당 메서드 내에서만 사용되는 클래스다. (로컬 변수처럼!)
-        class AddStatement implements StatementStrategy{
-            // 내부 클래스에서 외부 변수를 쓸 때는 외부 변수는 final로 변경 금지를 하도록 해야 한다.
-
-            @Override
-            public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
-                PreparedStatement ps = c.prepareStatement("insert into users values (?, ?, ?)");
-                ps.setString(1, user.getId());
-                ps.setString(2, user.getUserName());
-                ps.setString(3, user.getPassword());
-
-                return ps;
-            }
-        }
-
-        StatementStrategy st = new AddStatement();
-        /* StatementStrategy st = new StatementStrategy(){ // 이것처럼 익명 내부 클래스로 선언도 가능하다.
-              public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
-                  PreparedStatement ps = c.preparedStatement("insert into users values(?, ?, ?)");
-                  ps.setString(1, user.getId());
-                  ps.setString(2, user.getUserName());
-                  ps.setString(3, user.getPassword());
-              }
-
-              return ps;
-           }
-        */
-        jdbcContext.workWithStatementStrategy(st);
-    }
-
-    public void addByS_TC(final User user) throws SQLException {
-        jdbcContext.executeSql("insert into users values(?, ?, ?)", user.getId(), user.getUserName(), user.getPassword());
+        this.jdbcTemplate.update("insert into users values (?, ?, ?)",
+                user.getId(), user.getUserName(), user.getPassword());
+        // 바로 쿼리에 바인딩할 값을 넣어줄 수 있다.
     }
 
     public User get(String id) throws SQLException {
-        Connection c = dataSource.getConnection();
+        /*Connection c = dataSource.getConnection();
 
         PreparedStatement ps = c.prepareStatement("select * from users where id = ?");
         ps.setString(1, id);
@@ -100,96 +39,43 @@ abstract public class UserDao {
         ps.close();
         c.close();
 
-        return user;
+        return user;*/
+        return jdbcTemplate.queryForObject("select * from users where id = ?", new RowMapper<>() {
+            @Override
+            public User mapRow(ResultSet rs, int rowNum) throws SQLException {
+                // rs.next(); 할 필요 없다. 이유는 아래 서술.
+                return new User(rs.getString("id"), rs.getString("name"), rs.getString("password"));
+                // rs.getString 인자를 columnIndex로 넣어도 상관없다.
+            }
+        }, id); // RowMapper는 ResultSet 인자와 인스턴스 사이 바인딩을 위한 콜백. 마지막 파라미터 id는 sql의 ? 바인딩을 위함.
+        // queryForObject는 SQL 실행시 하나의 row 값만 얻기를 기대하여 ResultSet의 next()를 바로 실행한 뒤 RowMapper 콜백을 호출한다.
     }
 
-    public void deleteAllbyT() throws SQLException { // 템플릿 메서드를 이용한 deleteAll
-        Connection c = null;
-        PreparedStatement ps = null;
-
-        try {
-            c = dataSource.getConnection();
-            ps = makeDeleteStatement(c); // 템플릿 메서드 패턴
-            ps.executeUpdate();
-        }catch (SQLException e){
-            throw e;
-        }finally {
-            if (ps != null){
-                try {
-                    ps.close();
-                }catch (SQLException e){}
+    public void deleteAll(){
+        /*jdbcTemplate.update(new PreparedStatementCreator() {
+            @Override
+            public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+                return con.prepareStatement("delete from users");
             }
-
-            if (c != null){
-                try {
-                    c.close();
-                }catch (SQLException e) {}
-            }
-        }
-
+        });*/
+        // jdbcTemplate 에서 PreparedStatementCreator 인터페이스의 createPreparedStatement() 메서드가 콜백이다.
+        // 해당 콜백을 받아 업데이트하는 템플릿 메서드는 update() 메서드다. 위처럼 전략을 따로 생성할 수도 있고 아래처럼 SQL만 넘길 수도 있다.
+        jdbcTemplate.update("delete from users");
     }
 
-    abstract protected PreparedStatement makeDeleteStatement(Connection c) throws SQLException;
 
     public int getCount() throws SQLException {
-        Connection c = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-
-        try {
-            c = dataSource.getConnection();
-            ps = c.prepareStatement("select count(*) from users");
-            rs = ps.executeQuery();
-
-            rs.next();
-            return rs.getInt(1);
-        }catch (SQLException e){
-            throw e;
-        }finally {
-            if (rs != null){
-                try{
-                    rs.close();
-                }catch (SQLException e){}
-            }
-            if (ps != null){
-                try{
-                    ps.close();
-                }catch (SQLException e){}
-            }
-            if (c != null){
-                try {
-                    c.close();
-                }catch (SQLException e){}
-            }
-        }
-
+        return this.jdbcTemplate.query(con -> con.prepareStatement("select count(*) from users"),
+                new ResultSetExtractor<Integer>() {
+                @Override
+                public Integer extractData(ResultSet rs) throws SQLException, DataAccessException {
+                    rs.next();
+                    return rs.getInt(1);
+                }
+            }); // createPreparedStatement() 메서드로 쿼리를 수행, 두번째 인자값인 ResultSetExtractor 인터페이스 내 extraData
+        // 메서드로 결과 값을 가져오며 최종적으로 update() 메서드는 그 결과 값을 반환한다.
+        // 이 콜백 오브젝트 코드는 재사용성이 있어서 이미 JdbcTemplate 내에는 아래처럼 한 줄로 바꿀 수 있도록 지원한다.
+        // return this.jdbcTemplate.queryForObject("select count(*) from users", Integer.class);
     }
-
-    public void deleteAllbyS() throws SQLException { // 전략 패턴을 이용한 deleteAll
-        StatementStrategy st = new DeleteAllStatement(); // 선택한 전략의 오브젝트 생성
-        jdbcContext.workWithStatementStrategy(st); // 컨텍스트 호출, 전략 오브젝트 전달
-    }
-
-    public void deleteAllbyS_TC() throws SQLException { // 템플릿 콜백 패턴을 이용한 deleteAll
-        jdbcContext.executeSql("delete from users"); // 컨텍스트 호출
-    }
-
-    /*public void jdbcContextWithStatementStrategy(StatementStrategy strategy) throws SQLException{ // 전략 패턴
-        // Client가 전략을 선택한다.
-        // 공통 부분은 그대로, 바뀌는 부분은 makePreparedStatement 메서드로 구성되어 있으며, 이 메서드도 전략에 따라 변화한다.
-        Connection c = null;
-        PreparedStatement ps = null;
-
-        try {
-            c = dataSource.getConnection();
-            ps = strategy.makePreparedStatement(c);
-            ps.executeUpdate();
-        }catch (SQLException e){
-            throw e;
-        }finally {
-            if(ps != null){ try { ps.close(); } catch (SQLException e){} }
-            if(c != null){ try { c.close(); } catch (SQLException e){} }
-            }
-    }*/ // JdbcContext 클래스로 따로 뺌. 이 코드는 여러군데에서 재사용되기 좋기 때문.
 
 }

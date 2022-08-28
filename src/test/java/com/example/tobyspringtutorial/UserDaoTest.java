@@ -1,7 +1,6 @@
 package com.example.tobyspringtutorial;
 
 import com.example.tobyspringtutorial.modules.DaoFactory;
-import com.example.tobyspringtutorial.modules.JdbcContext;
 import com.example.tobyspringtutorial.modules.User;
 import com.example.tobyspringtutorial.modules.UserDao;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,9 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
-// import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.dao.EmptyResultDataAccessException;
-// import org.springframework.test.context.ContextConfiguration; // JUnit4
 
 import java.sql.SQLException;
 
@@ -37,13 +34,13 @@ public class UserDaoTest {
         this.user2 = new User("2", "SonHeungMin", "7");
         this.user3 = new User("3", "KimMinJae", "3");
 
-        dao.deleteAllbyS_TC();
+        dao.deleteAll();
     }
 
     @Test
     void addAndGet() throws SQLException {
-        dao.addByS_localClassUsed(user1);
-        dao.addByS_localClassUsed(user2);
+        dao.add(user1);
+        dao.add(user2);
 
         User findUser1 = dao.get("1234");
         assertThat(findUser1.getUserName()).isEqualTo(user1.getUserName());
@@ -56,9 +53,6 @@ public class UserDaoTest {
 
     @Test
     public void getUserFailure() {
-        // given
-        // when
-        // then
         assertThrows(EmptyResultDataAccessException.class, () -> dao.get("231421"));
     }
 
@@ -66,13 +60,13 @@ public class UserDaoTest {
     public void count() throws Exception {
         assertThat(dao.getCount()).isEqualTo(0);
 
-        dao.addByS_TC(user1);
+        dao.add(user1);
         assertThat(dao.getCount()).isEqualTo(1);
 
-        dao.addByS_TC(user2);
+        dao.add(user2);
         assertThat(dao.getCount()).isEqualTo(2);
 
-        dao.addByS_TC(user3);
+        dao.add(user3);
         assertThat(dao.getCount()).isEqualTo(3);
 
     }
