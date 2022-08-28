@@ -11,6 +11,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.dao.EmptyResultDataAccessException;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -69,5 +70,35 @@ public class UserDaoTest {
         dao.add(user3);
         assertThat(dao.getCount()).isEqualTo(3);
 
+    }
+
+    @Test
+    void getAll() throws SQLException {
+        List<User> users0 = dao.getAll(); // Negative Test (비정상적인 결과가 도출되도록 하는 테스트. Positive Test보다 더 중요함. <-> Positive Test)
+        assertThat(users0.size()).isEqualTo(0);
+
+        dao.add(user1);
+        List<User> users1 = dao.getAll();
+        assertThat(users1.size()).isEqualTo(1);
+        checkSameUser(user1, users1.get(0));
+
+        dao.add(user2);
+        List<User> users2 = dao.getAll();
+        assertThat(users2.size()).isEqualTo(2);
+        checkSameUser(user1, users2.get(0));
+        checkSameUser(user2, users2.get(1));
+
+        dao.add(user3);
+        List<User> users3 = dao.getAll();
+        assertThat(users3.size()).isEqualTo(3);
+        checkSameUser(user1, users3.get(0));
+        checkSameUser(user2, users3.get(1));
+        checkSameUser(user3, users3.get(2));
+    }
+
+    private void checkSameUser(User u1, User u2){
+        assertThat(u1.getId()).isEqualTo(u2.getId());
+        assertThat(u1.getUserName()).isEqualTo(u2.getUserName());
+        assertThat(u1.getPassword()).isEqualTo(u2.getPassword());
     }
 }

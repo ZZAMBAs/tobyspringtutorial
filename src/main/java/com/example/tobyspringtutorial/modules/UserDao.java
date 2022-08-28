@@ -9,13 +9,12 @@ import org.springframework.jdbc.core.RowMapper;
 
 import javax.sql.DataSource;
 import java.sql.*;
+import java.util.List;
 
 public class UserDao {
-    private DataSource dataSource;
     private JdbcTemplate jdbcTemplate; // 스프링서 직접 지원하는 JDBC 코드용 기본 템플릿. 직접 만든 jdbcContext와 역할이 동일.
 
     public void setDataSource(DataSource dataSource){
-        this.dataSource = dataSource;
         jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
@@ -49,6 +48,14 @@ public class UserDao {
             }
         }, id); // RowMapper는 ResultSet 인자와 인스턴스 사이 바인딩을 위한 콜백. 마지막 파라미터 id는 sql의 ? 바인딩을 위함.
         // queryForObject는 SQL 실행시 하나의 row 값만 얻기를 기대하여 ResultSet의 next()를 바로 실행한 뒤 RowMapper 콜백을 호출한다.
+        // queryForObject는 ResultSet에 결과행이 1개일 때 쓰는것이 좋다.
+    }
+
+    public List<User> getAll(){
+        return jdbcTemplate.query("select * from users order by id", (rs, rowNum) -> { // RowMapper
+            return new User(rs.getString(1), rs.getString(2), rs.getString(3));
+        });
+        // query()는 T, List<T>, void 등으로 반환타입이 다양하다. 콜백에 따라 이는 결정된다.
     }
 
     public void deleteAll(){
