@@ -1,9 +1,7 @@
 package com.example.tobyspringtutorial.modules;
 
 import org.springframework.dao.DataAccessException;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 
@@ -12,10 +10,15 @@ import java.sql.*;
 import java.util.List;
 
 public class UserDao {
+    private RowMapper<User> userRowMapper;
     private JdbcTemplate jdbcTemplate; // 스프링서 직접 지원하는 JDBC 코드용 기본 템플릿. 직접 만든 jdbcContext와 역할이 동일.
 
     public void setDataSource(DataSource dataSource){
         jdbcTemplate = new JdbcTemplate(dataSource);
+    }
+
+    public void setUserRowMapper(RowMapper userRowMapper){ // DI
+        this.userRowMapper = userRowMapper;
     }
 
     public void add(User user) throws SQLException {
@@ -39,22 +42,13 @@ public class UserDao {
         c.close();
 
         return user;*/
-        return jdbcTemplate.queryForObject("select * from users where id = ?", new RowMapper<>() {
-            @Override
-            public User mapRow(ResultSet rs, int rowNum) throws SQLException {
-                // rs.next(); 할 필요 없다. 이유는 아래 서술.
-                return new User(rs.getString("id"), rs.getString("name"), rs.getString("password"));
-                // rs.getString 인자를 columnIndex로 넣어도 상관없다.
-            }
-        }, id); // RowMapper는 ResultSet 인자와 인스턴스 사이 바인딩을 위한 콜백. 마지막 파라미터 id는 sql의 ? 바인딩을 위함.
+        return jdbcTemplate.queryForObject("select * from users where id = ?", userRowMapper, id); // RowMapper는 ResultSet 인자와 인스턴스 사이 바인딩을 위한 콜백. 마지막 파라미터 id는 sql의 ? 바인딩을 위함.
         // queryForObject는 SQL 실행시 하나의 row 값만 얻기를 기대하여 ResultSet의 next()를 바로 실행한 뒤 RowMapper 콜백을 호출한다.
         // queryForObject는 ResultSet에 결과행이 1개일 때 쓰는것이 좋다.
     }
 
     public List<User> getAll(){
-        return jdbcTemplate.query("select * from users order by id", (rs, rowNum) -> { // RowMapper
-            return new User(rs.getString(1), rs.getString(2), rs.getString(3));
-        });
+        return jdbcTemplate.query("select * from users order by id", userRowMapper);
         // query()는 T, List<T>, void 등으로 반환타입이 다양하다. 콜백에 따라 이는 결정된다.
     }
 

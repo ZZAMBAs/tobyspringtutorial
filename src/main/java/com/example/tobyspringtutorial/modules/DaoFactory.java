@@ -2,9 +2,12 @@ package com.example.tobyspringtutorial.modules;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 
 import javax.sql.DataSource;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 @Configuration
 public class DaoFactory {
@@ -12,6 +15,7 @@ public class DaoFactory {
     public UserDao userDao(){
         UserDao userDao = new UserDao();
         userDao.setDataSource(dataSource());
+        userDao.setUserRowMapper(userRowMapper());
         return userDao;
     }
 
@@ -26,5 +30,13 @@ public class DaoFactory {
         dataSource.setPassword("1234");
 
         return dataSource;
+    }
+
+    @Bean
+    public RowMapper<User> userRowMapper(){
+        // 재사용성이 많아 UserDao에선 인스턴스 변수로 초기화하고, 이것이 따로 상태 필드가 없으며 한번만 뽑으면 되므로, 빈으로 만듦.
+        return (rs, rowNum) -> new User(rs.getString("id"),
+                rs.getString("username"),
+                rs.getString("password"));
     }
 }
