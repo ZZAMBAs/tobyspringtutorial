@@ -8,9 +8,16 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator;
+import org.springframework.jdbc.support.SQLExceptionTranslator;
 
+import javax.sql.DataSource;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,19 +25,22 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest(classes = DaoFactory.class) // 통합 테스트
 public class UserDaoTest {
+    //@Autowired
+    //private ApplicationContext ac;
     @Autowired
-    private ApplicationContext ac;
     private UserDao dao;
+    @Autowired
+    private DataSource dataSource;
     private User user1;
     private User user2;
     private User user3;
 
     @BeforeEach
-    public void cleanData() throws SQLException {
+    public void cleanData(){
         /*System.out.println(this.ac); // ac는 한번 만들어지고 계속 사용된다.
         System.out.println(this); // 테스트 오브젝트는 테스트 수행때마다 다시 생성된다.*/
 
-        this.dao = ac.getBean("userDao", UserDao.class);
+        //this.dao = ac.getBean("userDao", UserDao.class);
         this.user1 = new User("1234", "HwangHeeChan", "13");
         this.user2 = new User("2", "SonHeungMin", "7");
         this.user3 = new User("3", "KimMinJae", "3");
@@ -39,7 +49,7 @@ public class UserDaoTest {
     }
 
     @Test
-    void addAndGet() throws SQLException {
+    void addAndGet() {
         dao.add(user1);
         dao.add(user2);
 
@@ -58,7 +68,7 @@ public class UserDaoTest {
     }
 
     @Test
-    public void count() throws Exception {
+    public void count() {
         assertThat(dao.getCount()).isEqualTo(0);
 
         dao.add(user1);
@@ -73,7 +83,7 @@ public class UserDaoTest {
     }
 
     @Test
-    void getAll() throws SQLException {
+    void getAll() {
         List<User> users0 = dao.getAll(); // Negative Test (비정상적인 결과가 도출되도록 하는 테스트. Positive Test보다 더 중요함. <-> Positive Test)
         assertThat(users0.size()).isEqualTo(0);
 
@@ -101,4 +111,31 @@ public class UserDaoTest {
         assertThat(u1.getUserName()).isEqualTo(u2.getUserName());
         assertThat(u1.getPassword()).isEqualTo(u2.getPassword());
     }
+
+    @Test
+    void duplicateKey(){ // 스프링의 데이터 액세스 예외를 확인하는 학습 테스트
+        dao.add(user1);
+
+        assertThrows(DataAccessException.class, () -> dao.add(user1));
+        assertThrows(DataIntegrityViolationException.class, () -> dao.add(user1));
+        assertThrows(DuplicateKeyException.class, () -> dao.add(user1));
+        // 아래로 갈수록 구체화된 예외의 테스트 코드다.
+        // DuplicateKeyException은 JDBC에만 해당하여서 JPA 같은 다른 ORM에서는 이를 적용할 수 없다.
+        // 이를테면 하이버네이트에서는 중복 키에 대해 DataIntegrityViolationException 예외를 발생시킨다.
+        // 따라서 학습 테스트로 어떤 예외로 전환되는지 알 필요가 있다.
+    }
+
+    @Test
+    void SqlExceptionTranslate() { // SQL DB 에러 코드를 이용해 예외 전환 시키는 테스트
+        try {
+            dao.add(user1);
+            dao.add(user1);
+        }catch (DuplicateKeyException e){
+            SQLException sqlEx = (SQLException) e.getRootCause(); // 중첩된 예외를 가져온다.
+            SQLExceptionTranslator set = new SQLErrorCodeSQLExceptionTranslator(this.dataSource);
+
+            assertThat(set.translate(null, null, sqlEx)).isInstanceOf(DuplicateKeyException.class);
+        }
+
+    } // 이 테스트의 결과로 알 수 있듯, 어느 DB를 쓰더라도 우리가 알고 있는 예외로 전환을 할 수가 있다.
 }

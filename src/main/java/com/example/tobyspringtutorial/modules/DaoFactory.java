@@ -13,9 +13,10 @@ import java.sql.SQLException;
 public class DaoFactory {
     @Bean
     public UserDao userDao(){
-        UserDao userDao = new UserDao();
-        userDao.setDataSource(dataSource());
-        userDao.setUserRowMapper(userRowMapper());
+        UserDaoJdbc userDaoJdbc = new UserDaoJdbc();
+        userDaoJdbc.setDataSource(dataSource());
+        userDaoJdbc.setUserRowMapper(userRowMapper());
+        UserDao userDao = userDaoJdbc;
         return userDao;
     }
 
