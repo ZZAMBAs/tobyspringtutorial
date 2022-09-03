@@ -23,26 +23,13 @@ public class UserDaoJdbc implements UserDao{
     }
 
     public void add(User user) throws DuplicateKeyException { // JdbcTemplate는 중복 키 삽입에 대한 예외를 만들어 놓았다.
-        this.jdbcTemplate.update("insert into users values (?, ?, ?)",
-                user.getId(), user.getUserName(), user.getPassword());
+        this.jdbcTemplate.update("insert into users values (?, ?, ?, ?, ?, ?)",
+                user.getId(), user.getUserName(), user.getPassword(),
+                user.getLevel().intValue(), user.getLogin(), user.getRecommend());
         // 바로 쿼리에 바인딩할 값을 넣어줄 수 있다.
     }
 
     public User get(String id) {
-        /*Connection c = dataSource.getConnection();
-
-        PreparedStatement ps = c.prepareStatement("select * from users where id = ?");
-        ps.setString(1, id);
-        ResultSet rs = ps.executeQuery();
-        if(!rs.next())
-            throw new EmptyResultDataAccessException(1);
-        User user = new User(rs.getString("id"), rs.getString("username"), rs.getString("password"));
-
-        rs.close();
-        ps.close();
-        c.close();
-
-        return user;*/
         return jdbcTemplate.queryForObject("select * from users where id = ?", userRowMapper, id); // RowMapper는 ResultSet 인자와 인스턴스 사이 바인딩을 위한 콜백. 마지막 파라미터 id는 sql의 ? 바인딩을 위함.
         // queryForObject는 SQL 실행시 하나의 row 값만 얻기를 기대하여 ResultSet의 next()를 바로 실행한 뒤 RowMapper 콜백을 호출한다.
         // queryForObject는 ResultSet에 결과행이 1개일 때 쓰는것이 좋다.
@@ -54,14 +41,6 @@ public class UserDaoJdbc implements UserDao{
     }
 
     public void deleteAll(){
-        /*jdbcTemplate.update(new PreparedStatementCreator() {
-            @Override
-            public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-                return con.prepareStatement("delete from users");
-            }
-        });*/
-        // jdbcTemplate 에서 PreparedStatementCreator 인터페이스의 createPreparedStatement() 메서드가 콜백이다.
-        // 해당 콜백을 받아 업데이트하는 템플릿 메서드는 update() 메서드다. 위처럼 전략을 따로 생성할 수도 있고 아래처럼 SQL만 넘길 수도 있다.
         jdbcTemplate.update("delete from users");
     }
 

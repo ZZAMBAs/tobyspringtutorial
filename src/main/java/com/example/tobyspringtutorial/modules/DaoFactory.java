@@ -38,6 +38,9 @@ public class DaoFactory {
         // 재사용성이 많아 UserDao에선 인스턴스 변수로 초기화하고, 이것이 따로 상태 필드가 없으며 한번만 뽑으면 되므로, 빈으로 만듦.
         return (rs, rowNum) -> new User(rs.getString("id"),
                 rs.getString("username"),
-                rs.getString("password"));
+                rs.getString("password"),
+                Level.valueOf(rs.getInt("level")),
+                rs.getInt("login"),
+                rs.getInt("recommend"));
     }
 }
