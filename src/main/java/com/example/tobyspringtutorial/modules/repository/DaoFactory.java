@@ -1,13 +1,12 @@
-package com.example.tobyspringtutorial.modules;
+package com.example.tobyspringtutorial.modules.repository;
 
+import com.example.tobyspringtutorial.modules.service.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 
 import javax.sql.DataSource;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
 @Configuration
 public class DaoFactory {
@@ -42,5 +41,12 @@ public class DaoFactory {
                 Level.valueOf(rs.getInt("level")),
                 rs.getInt("login"),
                 rs.getInt("recommend"));
+    }
+
+    @Bean
+    public UserService userService(){
+        UserService userService = new UserService();
+        userService.setUserDao(userDao());
+        return userService;
     }
 }

@@ -1,7 +1,5 @@
-package com.example.tobyspringtutorial.modules;
+package com.example.tobyspringtutorial.modules.repository;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;

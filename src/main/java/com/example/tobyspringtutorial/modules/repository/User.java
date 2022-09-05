@@ -1,4 +1,4 @@
-package com.example.tobyspringtutorial.modules;
+package com.example.tobyspringtutorial.modules.repository;
 
 public class User {
     private String id;

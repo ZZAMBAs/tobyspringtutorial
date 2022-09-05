@@ -1,4 +1,4 @@
-package com.example.tobyspringtutorial.modules;
+package com.example.tobyspringtutorial.modules.repository;
 
 import java.sql.Connection;
 import java.sql.SQLException;

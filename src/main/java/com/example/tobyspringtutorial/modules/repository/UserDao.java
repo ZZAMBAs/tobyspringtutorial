@@ -1,4 +1,4 @@
-package com.example.tobyspringtutorial.modules;
+package com.example.tobyspringtutorial.modules.repository;
 
 import java.util.List;
 
@@ -8,4 +8,5 @@ public interface UserDao { // 인터페이스로 만들어 기술에 독립적�
     List<User> getAll();
     void deleteAll();
     int getCount();
+    void update(User user);
 }

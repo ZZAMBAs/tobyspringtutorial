@@ -1,9 +1,9 @@
-package com.example.tobyspringtutorial;
+package com.example.tobyspringtutorial.modules.repository;
 
-import com.example.tobyspringtutorial.modules.DaoFactory;
-import com.example.tobyspringtutorial.modules.Level;
-import com.example.tobyspringtutorial.modules.User;
-import com.example.tobyspringtutorial.modules.UserDao;
+import com.example.tobyspringtutorial.modules.repository.DaoFactory;
+import com.example.tobyspringtutorial.modules.repository.Level;
+import com.example.tobyspringtutorial.modules.repository.User;
+import com.example.tobyspringtutorial.modules.repository.UserDao;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -138,4 +138,25 @@ public class UserDaoTest {
         }
 
     } // 이 테스트의 결과로 알 수 있듯, 어느 DB를 쓰더라도 우리가 알고 있는 예외로 전환을 할 수가 있다.
+
+    @Test
+    public void update(){
+        // given
+        dao.add(user1);
+        dao.add(user2);
+
+        // 아래부턴 인스턴스 변수를 수정하는 코드들인데, 어차피 테스트 실행마다 테스트 오브젝트가 새로 생성되니 수정해도 괜찮다.
+        user1.setUserName("LeeKangIn");
+        user1.setPassword("mallorca");
+        user1.setLevel(Level.GOLD);
+        user1.setLogin(1000);
+        user1.setRecommend(999);
+        dao.update(user1);
+        // when
+        User updateUser1 = dao.get(user1.getId());
+        User sameUser2 = dao.get(user2.getId());
+        // then
+        checkSameUser(user1, updateUser1);
+        checkSameUser(user2, sameUser2);
+    }
 }

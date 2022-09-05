@@ -1,4 +1,4 @@
-package com.example.tobyspringtutorial.modules;
+package com.example.tobyspringtutorial.modules.repository;
 
 // Enum: http://www.tcpschool.com/java/java_api_enum
 public enum Level {

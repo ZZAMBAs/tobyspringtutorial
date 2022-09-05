@@ -1,4 +1,4 @@
-package com.example.tobyspringtutorial.modules;
+package com.example.tobyspringtutorial.modules.repository;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
@@ -13,6 +13,7 @@ import java.util.List;
 public class UserDaoJdbc implements UserDao{
     private RowMapper<User> userRowMapper;
     private JdbcTemplate jdbcTemplate; // 스프링서 직접 지원하는 JDBC 코드용 기본 템플릿. 직접 만든 jdbcContext와 역할이 동일.
+    // https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/JdbcTemplate.html
 
     public void setDataSource(DataSource dataSource){
         jdbcTemplate = new JdbcTemplate(dataSource);
@@ -59,4 +60,10 @@ public class UserDaoJdbc implements UserDao{
         // return this.jdbcTemplate.queryForObject("select count(*) from users", Integer.class);
     }
 
+    @Override
+    public void update(User user) {
+        this.jdbcTemplate.update("update users set username = ?, password = ?, level = ?, login = ?, " +
+                "recommend = ? where id = ?", user.getUserName(), user.getPassword(), user.getLevel().intValue(),
+                user.getLogin(), user.getRecommend(), user.getId());
+    }
 }
