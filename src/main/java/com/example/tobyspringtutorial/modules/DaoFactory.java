@@ -5,6 +5,8 @@ import com.example.tobyspringtutorial.modules.objects.User;
 import com.example.tobyspringtutorial.modules.repository.UserDao;
 import com.example.tobyspringtutorial.modules.repository.UserDaoJdbc;
 import com.example.tobyspringtutorial.modules.service.UserService;
+import com.example.tobyspringtutorial.modules.service.UserServicePolicy;
+import com.example.tobyspringtutorial.modules.service.UserServicePolicyDefault;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.RowMapper;
@@ -19,8 +21,7 @@ public class DaoFactory {
         UserDaoJdbc userDaoJdbc = new UserDaoJdbc();
         userDaoJdbc.setDataSource(dataSource());
         userDaoJdbc.setUserRowMapper(userRowMapper());
-        UserDao userDao = userDaoJdbc;
-        return userDao;
+        return userDaoJdbc;
     }
 
     @Bean
@@ -51,6 +52,14 @@ public class DaoFactory {
     public UserService userService(){
         UserService userService = new UserService();
         userService.setUserDao(userDao());
+        userService.setUserServicePolicy(userServicePolicy());
         return userService;
+    }
+
+    @Bean
+    public UserServicePolicy userServicePolicy(){ // 업그레이드 정책
+        UserServicePolicyDefault userServicePolicy = new UserServicePolicyDefault();
+        userServicePolicy.setUserDao(userDao());
+        return userServicePolicy;
     }
 }
