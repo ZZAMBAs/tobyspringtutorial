@@ -18,6 +18,7 @@ public class User {
     }
 
     public void upgradeLevel(){ // User가 직접 자신의 정보를 바꾸는 비즈니스 로직을 갖는다.
+        // 객체는 객체 자신이 능동적으로 상태를 바꿔야 한다. 따라서 서비스 계층보단 자기 자신이 자기 자신의 상태를 바꾸는게 바람직하다.
         Level nextLevel = this.level.nextLevel();
         if (nextLevel == null)
             throw new IllegalStateException(this.level + "은 업그레이드가 불가능합니다.");
