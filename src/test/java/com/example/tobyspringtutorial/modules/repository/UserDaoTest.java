@@ -1,9 +1,8 @@
 package com.example.tobyspringtutorial.modules.repository;
 
-import com.example.tobyspringtutorial.modules.repository.DaoFactory;
-import com.example.tobyspringtutorial.modules.repository.Level;
-import com.example.tobyspringtutorial.modules.repository.User;
-import com.example.tobyspringtutorial.modules.repository.UserDao;
+import com.example.tobyspringtutorial.modules.DaoFactory;
+import com.example.tobyspringtutorial.modules.objects.Level;
+import com.example.tobyspringtutorial.modules.objects.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

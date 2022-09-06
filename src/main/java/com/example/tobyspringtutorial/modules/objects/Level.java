@@ -1,16 +1,23 @@
-package com.example.tobyspringtutorial.modules.repository;
+package com.example.tobyspringtutorial.modules.objects;
 
 // Enum: http://www.tcpschool.com/java/java_api_enum
 public enum Level {
-    BASIC(1), SILVER(2), GOLD(3);
+    GOLD(3, null), SILVER(2, GOLD), BASIC(1, SILVER); // 이제 레벨들은 다음 레벨 정보도 담는다.
 
     private final int value;
-    Level(int value) {
+    private final Level nextLevel;
+
+    Level(int value, Level nextLevel) {
         this.value = value;
+        this.nextLevel =nextLevel;
     }
 
     public int intValue() { // DB와의 타입을 맞춰주기 위해 필요한 메서드 (객체(Level) -> DB(int))
-        return value;
+        return this.value;
+    }
+
+    public Level nextLevel(){
+        return this.nextLevel;
     }
 
 

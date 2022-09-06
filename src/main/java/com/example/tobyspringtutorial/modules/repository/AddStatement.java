@@ -1,5 +1,7 @@
 package com.example.tobyspringtutorial.modules.repository;
 
+import com.example.tobyspringtutorial.modules.objects.User;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;

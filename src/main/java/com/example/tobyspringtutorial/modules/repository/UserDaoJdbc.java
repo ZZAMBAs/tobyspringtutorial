@@ -1,5 +1,6 @@
 package com.example.tobyspringtutorial.modules.repository;
 
+import com.example.tobyspringtutorial.modules.objects.User;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;

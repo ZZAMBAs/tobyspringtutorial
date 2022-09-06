@@ -1,5 +1,7 @@
 package com.example.tobyspringtutorial.modules.repository;
 
+import com.example.tobyspringtutorial.modules.objects.User;
+
 import java.util.List;
 
 public interface UserDao { // 인터페이스로 만들어 기술에 독립적으로 만든다.

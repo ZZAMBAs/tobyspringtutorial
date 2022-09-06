@@ -1,4 +1,4 @@
-package com.example.tobyspringtutorial.modules.repository;
+package com.example.tobyspringtutorial.modules.objects;
 
 public class User {
     private String id;
@@ -15,6 +15,16 @@ public class User {
         this.level = level;
         this.login = login;
         this.recommend = recommend;
+    }
+
+    public void upgradeLevel(){ // User가 직접 자신의 정보를 바꾸는 비즈니스 로직을 갖는다.
+        Level nextLevel = this.level.nextLevel();
+        if (nextLevel == null)
+            throw new IllegalStateException(this.level + "은 업그레이드가 불가능합니다.");
+        // 이미 UserService의 canUpgradeLevel() 메서드가 이 역할을 수행하지만, UserService가 아닌 곳에서도 User 오브젝트를
+        // 사용할 수 있기 때문에 자체적으로도 가지고 있는 것이 안전하다.
+        else
+            this.level = nextLevel;
     }
 
     public Level getLevel() {

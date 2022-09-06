@@ -1,5 +1,9 @@
-package com.example.tobyspringtutorial.modules.repository;
+package com.example.tobyspringtutorial.modules;
 
+import com.example.tobyspringtutorial.modules.objects.Level;
+import com.example.tobyspringtutorial.modules.objects.User;
+import com.example.tobyspringtutorial.modules.repository.UserDao;
+import com.example.tobyspringtutorial.modules.repository.UserDaoJdbc;
 import com.example.tobyspringtutorial.modules.service.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
