@@ -3,7 +3,6 @@ package com.example.tobyspringtutorial.modules.service;
 import com.example.tobyspringtutorial.modules.repository.Level;
 import com.example.tobyspringtutorial.modules.repository.User;
 import com.example.tobyspringtutorial.modules.repository.UserDao;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
@@ -15,10 +14,11 @@ public class UserService {
         this.userDao = userDao;
     }
 
-    public void upgradeLevel(){
+
+    public void upgradeLevels(){
         List<User> users = userDao.getAll();
         for (User user : users){
-            Boolean change = false; // 변경 flag
+            Boolean change; // 변경 flag
 
             if (user.getLevel() == Level.BASIC && user.getLogin() >= 50){ // BASIC 레벨 업그레이드
                 user.setLevel(Level.SILVER);
@@ -36,5 +36,11 @@ public class UserService {
             if (change)
                 userDao.update(user);
         }
+    }
+
+    public void add(User user){
+        if (user.getLevel() == null) // 레벨은 NOT NULL 항목이다.
+            user.setLevel(Level.BASIC);
+        userDao.add(user);
     }
 }
