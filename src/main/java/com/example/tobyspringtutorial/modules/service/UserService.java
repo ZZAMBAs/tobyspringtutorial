@@ -10,8 +10,8 @@ import java.util.List;
 public class UserService{
     public static final int MIN_LOGCOUNT_FOR_SILVER = 50; // 상수 중복 방지.
     public static final int MIN_RECCOUNT_FOR_GOLD = 30;
-    private UserDao userDao;
-    private UserServicePolicy userServicePolicy; // 업그레이드 정책 변경 가능성을 염두한 정책 분리.
+    protected UserDao userDao;
+    protected UserServicePolicy userServicePolicy; // 업그레이드 정책 변경 가능성을 염두한 정책 분리.
 
     public void setUserDao(UserDao userDao) {
         this.userDao = userDao;
