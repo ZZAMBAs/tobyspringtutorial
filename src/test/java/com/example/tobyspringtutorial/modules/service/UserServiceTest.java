@@ -47,7 +47,7 @@ class UserServiceTest {
     }
 
     @Test
-    public void upgradeLevels(){
+    public void upgradeLevels() throws Exception {
         // given
         userDao.deleteAll();
         for (User user : users) userDao.add(user);
@@ -87,7 +87,7 @@ class UserServiceTest {
     }
 
     @Test
-    public void upgradeAllOrNothing(){
+    public void upgradeAllOrNothing() throws Exception{
         // given
         UserService testUserService = new UserServiceForExceptionTest(users.get(3).getId());
         testUserService.setUserDao(this.userDao); // 스프링 빈이 아니므로 수동 DI
@@ -101,6 +101,6 @@ class UserServiceTest {
         }catch (TestUserServiceException e){}
         // then
         checkLevelUpgradeOccurred(users.get(1), false); // 롤백 되었는지 확인
-        // 트랜잭션 문제로 이 테스트는 실패한다.
+        // 트랜잭션 동기화로 이 테스트는 성공한다.
     }
 }

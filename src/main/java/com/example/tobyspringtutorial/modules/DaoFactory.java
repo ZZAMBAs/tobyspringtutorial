@@ -52,6 +52,7 @@ public class DaoFactory {
     public UserService userService(){
         UserService userService = new UserService();
         userService.setUserDao(userDao());
+        userService.setDataSource(dataSource());
         userService.setUserServicePolicy(userServicePolicy());
         return userService;
     }
