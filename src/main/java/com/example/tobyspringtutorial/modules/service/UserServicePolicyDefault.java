@@ -3,6 +3,8 @@ package com.example.tobyspringtutorial.modules.service;
 import com.example.tobyspringtutorial.modules.objects.Level;
 import com.example.tobyspringtutorial.modules.objects.User;
 import com.example.tobyspringtutorial.modules.repository.UserDao;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -40,23 +42,17 @@ public class UserServicePolicyDefault implements UserServicePolicy{ // 평소 �
     }
 
     private void sendUpgradeEmail(User user) {
-        Properties props = new Properties(); // Hashtable을 상속한 키,값 저장소
-        // https://docs.oracle.com/javase/7/docs/api/java/util/Properties.html
-        props.put("mail.smtp.host", "mail.ksug.org");
-        Session s = Session.getInstance(props, null); // JavaMail API(javax.mail) 사용.
-        // https://javadoc.io/doc/javax.mail/javax.mail-api/latest/index.html
+        // 스프링이 제공하는 메일 전송 추상화 기술들 (MailSender)
+        JavaMailSenderImpl mailSender = new JavaMailSenderImpl(); // 이 코드는 JavaMail API를 사용한다. (의존적이다)
+        mailSender.setHost("mail.server.com");
 
-        MimeMessage message = new MimeMessage(s);
-        try {
-            message.setFrom(new InternetAddress("useradmin@ksug.org"));
-            message.addRecipient(Message.RecipientType.TO, new InternetAddress(user.getEmail()));
-            message.setSubject("Upgrade 안내");
-            message.setText("사용자님의 등급이 " + user.getLevel().name() + "로 업그레이드 되었습니다.");
+        SimpleMailMessage mailMessage = new SimpleMailMessage();
+        mailMessage.setTo(user.getEmail());
+        mailMessage.setFrom("useradmin@ksug.org");
+        mailMessage.setSubject("Upgrade 안내");
+        mailMessage.setText("사용자님의 등급이 " + user.getLevel().name());
 
-            Transport.send(message);
-        }catch (MessagingException e) {
-            throw new RuntimeException(e);
-        }
+        mailSender.send(mailMessage);
     }
 
 }
