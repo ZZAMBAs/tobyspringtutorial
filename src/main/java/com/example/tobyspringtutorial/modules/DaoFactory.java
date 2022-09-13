@@ -10,7 +10,9 @@ import com.example.tobyspringtutorial.modules.service.UserServicePolicyDefault;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
 
@@ -52,7 +54,7 @@ public class DaoFactory {
     public UserService userService(){
         UserService userService = new UserService();
         userService.setUserDao(userDao());
-        userService.setDataSource(dataSource());
+        userService.setTransactionManager(platformTransactionManager());
         userService.setUserServicePolicy(userServicePolicy());
         return userService;
     }
@@ -62,5 +64,14 @@ public class DaoFactory {
         UserServicePolicyDefault userServicePolicy = new UserServicePolicyDefault();
         userServicePolicy.setUserDao(userDao());
         return userServicePolicy;
+    }
+
+    @Bean // 다른 곳에서도 사용 가능성이 높고 싱글톤 사용이 가능하여 빈으로 등록
+    public PlatformTransactionManager platformTransactionManager(){
+        return new DataSourceTransactionManager(this.dataSource()); // 기본 JDBC를 이용할 경우
+        // return new JtaTransactionManager(); // JTA를 이용할 경우
+        // return new JpaTransactionManager(); // JPA를 이용할 경우
+        // return new HibernateTransactionManager(); // Hibernate를 이용할 경우
+        // 이외에도 많음.
     }
 }

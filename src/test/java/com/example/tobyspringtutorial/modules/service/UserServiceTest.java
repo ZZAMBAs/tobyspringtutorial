@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.PlatformTransactionManager;
 
-import javax.sql.DataSource;
 import java.util.Arrays;
 import java.util.List;
 
@@ -28,7 +28,7 @@ class UserServiceTest {
     @Autowired
     private UserDao userDao;
     @Autowired
-    private DataSource dataSource;
+    private PlatformTransactionManager transactionManager;
     List<User> users;
 
     @BeforeAll
@@ -94,7 +94,7 @@ class UserServiceTest {
         // given
         UserService testUserService = new UserServiceForExceptionTest(users.get(3).getId());
         testUserService.setUserDao(this.userDao); // 스프링 빈이 아니므로 수동 DI
-        testUserService.setDataSource(this.dataSource);
+        testUserService.setTransactionManager(this.transactionManager);
         userDao.deleteAll();
         for (User user : users) userDao.add(user);
         // when
