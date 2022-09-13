@@ -11,6 +11,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import javax.sql.DataSource;
 import java.util.Arrays;
 import java.util.List;
 
@@ -26,6 +27,8 @@ class UserServiceTest {
     private UserService userService;
     @Autowired
     private UserDao userDao;
+    @Autowired
+    private DataSource dataSource;
     List<User> users;
 
     @BeforeAll
@@ -47,7 +50,7 @@ class UserServiceTest {
     }
 
     @Test
-    public void upgradeLevels() throws Exception {
+    public void upgradeLevels() {
         // given
         userDao.deleteAll();
         for (User user : users) userDao.add(user);
@@ -87,10 +90,11 @@ class UserServiceTest {
     }
 
     @Test
-    public void upgradeAllOrNothing() throws Exception{
+    public void upgradeAllOrNothing() {
         // given
         UserService testUserService = new UserServiceForExceptionTest(users.get(3).getId());
         testUserService.setUserDao(this.userDao); // 스프링 빈이 아니므로 수동 DI
+        testUserService.setDataSource(this.dataSource);
         userDao.deleteAll();
         for (User user : users) userDao.add(user);
         // when

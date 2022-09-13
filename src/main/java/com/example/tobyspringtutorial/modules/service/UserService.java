@@ -3,12 +3,12 @@ package com.example.tobyspringtutorial.modules.service;
 import com.example.tobyspringtutorial.modules.objects.Level;
 import com.example.tobyspringtutorial.modules.objects.User;
 import com.example.tobyspringtutorial.modules.repository.UserDao;
-import org.springframework.jdbc.datasource.DataSourceUtils;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.List;
 
 // 서비스 패키지는 주로 비즈니스 로직이 오는 패키지이다.
@@ -31,28 +31,27 @@ public class UserService{
         this.userServicePolicy = userServicePolicy;
     }
 
-    public void upgradeLevels() throws SQLException {
-        TransactionSynchronizationManager.initSynchronization(); // 트랜잭션 동기화 관리자를 이용한 동기화 작업 초기화.
-        // https://mangkyu.tistory.com/154
-        Connection c = DataSourceUtils.getConnection(dataSource); // DB 커넥션을 생성 + 트랜잭션 저장소 동기화(저장).
-        c.setAutoCommit(false); // 일반적으로 설정되어 있는 자동 커밋을 해제. 이러면 수동적으로 트랜잭션 제어가 가능하다.
+    public void upgradeLevels() {
+        // 스프링이 제공하는 트랜잭션 추상화 방법.
+        // https://velog.io/@jakeseo_me/%ED%86%A0%EB%B9%84%EC%9D%98-%EC%8A%A4%ED%94%84%EB%A7%81-%EC%A0%95%EB%A6%AC-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-5.2-%ED%8A%B8%EB%9E%9C%EC%9E%AD%EC%85%98-%EC%84%9C%EB%B9%84%EC%8A%A4-%EC%B6%94%EC%83%81%ED%99%94
+        PlatformTransactionManager tm // 트랜잭션 경계설정 추상 인터페이스. 역시 트랜잭션 동기화 저장소를 이용한다.
+                = new DataSourceTransactionManager(dataSource); // JDBC를 위한 구현체
+        TransactionStatus status = tm.getTransaction(new DefaultTransactionDefinition());
+        // DefaultTransactionDefinition 오브젝트는 트랜잭션에 대한 속성을 지니고 있음.
+        // 이렇게 시작된 트랜잭션은 TransactionStatus 타입 변수에 저장된다.
 
         try {
             List<User> users = userDao.getAll();
             for (User user : users)
                 if (userServicePolicy.canUpgradeLevel(user))
                     userServicePolicy.upgradeLevel(user);
-            c.commit();
+            tm.commit(status);
         }catch (Exception e){
-            c.rollback();
+            tm.rollback(status);
             throw e;
         }
-        finally {
-            DataSourceUtils.releaseConnection(c, dataSource); // DB 커넥션을 안전하게 닫음.
-            TransactionSynchronizationManager.unbindResource(this.dataSource); // 바인딩 제거
-            TransactionSynchronizationManager.clearSynchronization(); // 동기화 작업 종료
-        }
-    } // 코드 성격 통합, 재사용성 코드 분리, 코드 가독성 향상 등의 이유로 리팩토링.
+
+    }
 
     public void add(User user){
         if (user.getLevel() == null) // 레벨은 NOT NULL 항목이다.
