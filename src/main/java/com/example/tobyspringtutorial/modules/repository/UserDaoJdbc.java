@@ -1,14 +1,11 @@
 package com.example.tobyspringtutorial.modules.repository;
 
 import com.example.tobyspringtutorial.modules.objects.User;
-import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 
 import javax.sql.DataSource;
-import java.sql.*;
 import java.util.List;
 
 public class UserDaoJdbc implements UserDao{
@@ -25,9 +22,9 @@ public class UserDaoJdbc implements UserDao{
     }
 
     public void add(User user) throws DuplicateKeyException { // JdbcTemplate는 중복 키 삽입에 대한 예외를 만들어 놓았다.
-        this.jdbcTemplate.update("insert into users values (?, ?, ?, ?, ?, ?)",
+        this.jdbcTemplate.update("insert into users values (?, ?, ?, ?, ?, ?, ?)",
                 user.getId(), user.getUserName(), user.getPassword(),
-                user.getLevel().intValue(), user.getLogin(), user.getRecommend());
+                user.getLevel().intValue(), user.getLogin(), user.getRecommend(), user.getEmail());
         // 바로 쿼리에 바인딩할 값을 넣어줄 수 있다.
     }
 
@@ -49,13 +46,10 @@ public class UserDaoJdbc implements UserDao{
 
     public int getCount() {
         return this.jdbcTemplate.query(con -> con.prepareStatement("select count(*) from users"),
-                new ResultSetExtractor<Integer>() {
-                @Override
-                public Integer extractData(ResultSet rs) throws SQLException, DataAccessException {
+                rs -> {
                     rs.next();
                     return rs.getInt(1);
-                }
-            }); // createPreparedStatement() 메서드로 쿼리를 수행, 두번째 인자값인 ResultSetExtractor 인터페이스 내 extraData
+                }); // createPreparedStatement() 메서드로 쿼리를 수행, 두번째 인자값인 ResultSetExtractor 인터페이스 내 extraData
         // 메서드로 결과 값을 가져오며 최종적으로 update() 메서드는 그 결과 값을 반환한다.
         // 이 콜백 오브젝트 코드는 재사용성이 있어서 이미 JdbcTemplate 내에는 아래처럼 한 줄로 바꿀 수 있도록 지원한다.
         // return this.jdbcTemplate.queryForObject("select count(*) from users", Integer.class);
@@ -64,7 +58,7 @@ public class UserDaoJdbc implements UserDao{
     @Override
     public void update(User user) {
         this.jdbcTemplate.update("update users set username = ?, password = ?, level = ?, login = ?, " +
-                "recommend = ? where id = ?", user.getUserName(), user.getPassword(), user.getLevel().intValue(),
-                user.getLogin(), user.getRecommend(), user.getId());
+                "recommend = ?, email = ? where id = ?", user.getUserName(), user.getPassword(), user.getLevel().intValue(),
+                user.getLogin(), user.getRecommend(), user.getEmail(), user.getId());
     }
 }

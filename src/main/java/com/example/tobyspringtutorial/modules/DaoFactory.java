@@ -47,7 +47,8 @@ public class DaoFactory {
                 rs.getString("password"),
                 Level.valueOf(rs.getInt("level")),
                 rs.getInt("login"),
-                rs.getInt("recommend"));
+                rs.getInt("recommend"),
+                rs.getString("email"));
     }
 
     @Bean

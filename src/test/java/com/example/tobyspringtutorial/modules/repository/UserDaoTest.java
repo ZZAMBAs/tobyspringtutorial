@@ -109,6 +109,7 @@ public class UserDaoTest {
         assertThat(u1.getLevel()).isEqualTo(u2.getLevel());
         assertThat(u1.getLogin()).isEqualTo(u2.getLogin());
         assertThat(u1.getRecommend()).isEqualTo(u2.getRecommend());
+        assertThat(u1.getEmail()).isEqualTo(u2.getEmail());
     }
 
     @Test

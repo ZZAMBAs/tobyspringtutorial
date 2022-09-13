@@ -18,6 +18,8 @@ repositories {
 	mavenCentral()
 }
 
+
+
 dependencies {
 	// https://mvnrepository.com/artifact/mysql/mysql-connector-java
 	implementation 'mysql:mysql-connector-java:8.0.30'
@@ -27,6 +29,9 @@ dependencies {
 	runtimeOnly 'com.h2database:h2'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	// https://mvnrepository.com/artifact/com.sun.mail/javax.mail
+	implementation 'com.sun.mail:javax.mail:1.6.2'
+
 }
 
 tasks.named('test') {

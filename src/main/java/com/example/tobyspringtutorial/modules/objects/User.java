@@ -7,6 +7,17 @@ public class User {
     private Level level;
     private int login;
     private int recommend;
+    private String email;
+
+    public User(String id, String userName, String password, Level level, int login, int recommend, String email) {
+        this.id = id;
+        this.userName = userName;
+        this.password = password;
+        this.level = level;
+        this.login = login;
+        this.recommend = recommend;
+        this.email = email;
+    }
 
     public User(String id, String userName, String password, Level level, int login, int recommend) {
         this.id = id;
@@ -15,6 +26,7 @@ public class User {
         this.level = level;
         this.login = login;
         this.recommend = recommend;
+        this.email = null;
     }
 
     public void upgradeLevel(){ // User가 직접 자신의 정보를 바꾸는 비즈니스 로직을 갖는다.
@@ -74,5 +86,13 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }
