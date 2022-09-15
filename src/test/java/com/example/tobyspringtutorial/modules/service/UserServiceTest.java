@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.mail.MailSender;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import java.util.Arrays;
@@ -29,6 +30,8 @@ class UserServiceTest {
     private UserDao userDao;
     @Autowired
     private PlatformTransactionManager transactionManager;
+    @Autowired
+    MailSender mailSender;
     List<User> users;
 
     @BeforeAll
@@ -92,9 +95,16 @@ class UserServiceTest {
     @Test
     public void upgradeAllOrNothing() {
         // given
-        UserService testUserService = new UserServiceForExceptionTest(users.get(3).getId());
+        String testId = users.get(3).getId();
+        UserService testUserService = new UserServiceForExceptionTest();
         testUserService.setUserDao(this.userDao); // 스프링 빈이 아니므로 수동 DI
         testUserService.setTransactionManager(this.transactionManager);
+
+        UserServicePolicyForExceptionTest testUserServicePolicy = new UserServicePolicyForExceptionTest(testId);
+        testUserServicePolicy.setMailSender(this.mailSender);
+        testUserServicePolicy.setUserDao(this.userDao);
+
+        testUserService.setUserServicePolicy(testUserServicePolicy);
         userDao.deleteAll();
         for (User user : users) userDao.add(user);
         // when
@@ -106,5 +116,20 @@ class UserServiceTest {
         // then
         checkLevelUpgradeOccurred(users.get(1), false); // 롤백 되었는지 확인
         // 트랜잭션 동기화로 이 테스트는 성공한다.
+    }
+
+    @Test
+    public void mailSenderTest(){ // 콘솔 출력으로 테스트가 잘 되었는지 확인.
+        // given
+        User testUser = new User("12345", "조인스", "qwerty",
+                Level.BASIC, 1000, 999, "rksidksrksi@naver.com");
+        UserServicePolicyForExceptionTest testPolicy = new UserServicePolicyForExceptionTest("2");
+        testPolicy.setUserDao(this.userDao);
+        testPolicy.setMailSender(this.mailSender);
+        userDao.deleteAll();
+        userDao.add(testUser);
+        // when
+        testPolicy.upgradeLevel(testUser);
+        // then
     }
 }

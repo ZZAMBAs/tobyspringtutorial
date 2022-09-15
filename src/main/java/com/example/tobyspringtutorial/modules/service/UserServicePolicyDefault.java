@@ -3,27 +3,24 @@ package com.example.tobyspringtutorial.modules.service;
 import com.example.tobyspringtutorial.modules.objects.Level;
 import com.example.tobyspringtutorial.modules.objects.User;
 import com.example.tobyspringtutorial.modules.repository.UserDao;
+import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
-
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-import java.util.Properties;
 
 import static com.example.tobyspringtutorial.modules.service.UserService.MIN_LOGCOUNT_FOR_SILVER;
 import static com.example.tobyspringtutorial.modules.service.UserService.MIN_RECCOUNT_FOR_GOLD;
 
 public class UserServicePolicyDefault implements UserServicePolicy{ // 평소 업그레이드 정책.
     private UserDao userDao;
+    protected MailSender mailSender;
 
     public void setUserDao(UserDao userDao){
         this.userDao = userDao;
     }
+
+    public void setMailSender(MailSender mailSender) {
+        this.mailSender = mailSender;
+    }
+
     public boolean canUpgradeLevel(User user){
         Level userLevel = user.getLevel();
         switch (userLevel){
@@ -42,17 +39,13 @@ public class UserServicePolicyDefault implements UserServicePolicy{ // 평소 �
     }
 
     private void sendUpgradeEmail(User user) {
-        // 스프링이 제공하는 메일 전송 추상화 기술들 (MailSender)
-        JavaMailSenderImpl mailSender = new JavaMailSenderImpl(); // 이 코드는 JavaMail API를 사용한다. (의존적이다)
-        mailSender.setHost("mail.server.com");
-
         SimpleMailMessage mailMessage = new SimpleMailMessage();
         mailMessage.setTo(user.getEmail());
         mailMessage.setFrom("useradmin@ksug.org");
         mailMessage.setSubject("Upgrade 안내");
         mailMessage.setText("사용자님의 등급이 " + user.getLevel().name());
 
-        mailSender.send(mailMessage);
+        this.mailSender.send(mailMessage);
     }
 
 }

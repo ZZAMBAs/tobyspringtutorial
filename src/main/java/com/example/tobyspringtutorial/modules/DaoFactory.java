@@ -4,6 +4,7 @@ import com.example.tobyspringtutorial.modules.objects.Level;
 import com.example.tobyspringtutorial.modules.objects.User;
 import com.example.tobyspringtutorial.modules.repository.UserDao;
 import com.example.tobyspringtutorial.modules.repository.UserDaoJdbc;
+import com.example.tobyspringtutorial.modules.service.DummyMailSender;
 import com.example.tobyspringtutorial.modules.service.UserService;
 import com.example.tobyspringtutorial.modules.service.UserServicePolicy;
 import com.example.tobyspringtutorial.modules.service.UserServicePolicyDefault;
@@ -12,6 +13,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
+import org.springframework.mail.MailSender;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
@@ -64,6 +66,7 @@ public class DaoFactory {
     public UserServicePolicy userServicePolicy(){ // 업그레이드 정책
         UserServicePolicyDefault userServicePolicy = new UserServicePolicyDefault();
         userServicePolicy.setUserDao(userDao());
+        userServicePolicy.setMailSender(mailSender());
         return userServicePolicy;
     }
 
@@ -74,5 +77,12 @@ public class DaoFactory {
         // return new JpaTransactionManager(); // JPA를 이용할 경우
         // return new HibernateTransactionManager(); // Hibernate를 이용할 경우
         // 이외에도 많음.
+    }
+
+    @Bean
+    public MailSender mailSender(){
+        DummyMailSender mailSender = new DummyMailSender();// 구체적으로 사용할 MailSender 정의
+        // mailSender.setHost("mail.server.com"); // 메일 서버 지정
+        return mailSender;
     }
 }
