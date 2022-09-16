@@ -35,16 +35,20 @@ public class UserService{
         // 이렇게 시작된 트랜잭션은 TransactionStatus 타입 변수에 저장된다.
 
         try {
-            List<User> users = userDao.getAll();
-            for (User user : users)
-                if (userServicePolicy.canUpgradeLevel(user))
-                    userServicePolicy.upgradeLevel(user);
+            upgradeLevelsInternal(); // 코드 간결화.
             this.transactionManager.commit(status);
         }catch (Exception e){
             this.transactionManager.rollback(status);
             throw e;
         }
 
+    }
+
+    private void upgradeLevelsInternal() {
+        List<User> users = userDao.getAll();
+        for (User user : users)
+            if (userServicePolicy.canUpgradeLevel(user))
+                userServicePolicy.upgradeLevel(user);
     }
 
     public void add(User user){
