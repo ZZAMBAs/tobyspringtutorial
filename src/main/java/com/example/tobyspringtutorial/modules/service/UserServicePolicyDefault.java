@@ -38,7 +38,10 @@ public class UserServicePolicyDefault implements UserServicePolicy{ // 평소 �
         sendUpgradeEmail(user); // SRP에 의해 이곳에 메일 보내는 코드를 직접 추가하지 않도록 한다.
     }
 
-    private void sendUpgradeEmail(User user) {
+    private void sendUpgradeEmail(User user) { // 현재 이 메일 보내는 메서드는 트랜잭션 면에서 안전하지 않다.
+        // DB 에러로 롤백이 되어 버렸는데 메일이 발송되어 버린 경우 등.
+        // 이를 방지하기 위해서는 MailSender를 확장해서 트랜잭션 개념을 적용하거나, (추천)
+        // 발송 대상을 따로 모았다가 모든 작업이 제대로 커밋되었을 때 발송하는 방법이 있다.
         SimpleMailMessage mailMessage = new SimpleMailMessage();
         mailMessage.setTo(user.getEmail());
         mailMessage.setFrom("useradmin@ksug.org");

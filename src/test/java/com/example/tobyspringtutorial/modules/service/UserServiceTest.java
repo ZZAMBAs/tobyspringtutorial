@@ -10,9 +10,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.mail.MailException;
 import org.springframework.mail.MailSender;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -53,18 +57,32 @@ class UserServiceTest {
     }
 
     @Test
+    @DirtiesContext // DI를 바꿔야 되는 경우 표기하는 어노테이션. 이 어노테이션으로 인해 재활용하던 빈을 테스트 후 재생성한다.
+    // https://shortstories.gitbooks.io/studybook/content/dirtiescontext.html
     public void upgradeLevels() {
         // given
         userDao.deleteAll();
         for (User user : users) userDao.add(user);
+
+        MockMailSender mockMailSender = new MockMailSender();
+        UserServicePolicyDefault testPolicy = new UserServicePolicyDefault();
+        testPolicy.setUserDao(this.userDao);
+        testPolicy.setMailSender(mockMailSender); // 기존 DummyMailSender는 정보를 저장할 수 없어 여기서 테스트하기 힘들었다.
+        userService.setUserServicePolicy(testPolicy);
+
         // when
         userService.upgradeLevels();
-        // then
         checkLevelUpgradeOccurred(users.get(0), false);
         checkLevelUpgradeOccurred(users.get(1), true);
         checkLevelUpgradeOccurred(users.get(2), false);
         checkLevelUpgradeOccurred(users.get(3), true);
-        checkLevelUpgradeOccurred(users.get(4), false);
+        checkLevelUpgradeOccurred(users.get(4), false); // 위 결과들(성공 시 이메일 저장)은 목 오브젝트 내에 저장된다.
+
+        // then
+        List<String> requests = mockMailSender.getRequests();
+        assertThat(requests.size()).isEqualTo(2);
+        assertThat(requests.get(0)).isEqualTo(users.get(1).getEmail());
+        assertThat(requests.get(1)).isEqualTo(users.get(3).getEmail());
     }
 
     private void checkLevelUpgradeOccurred(User user, boolean expected){ // 리팩토링. 이제 2번째 파라미터는 업그레이드 되어야 하는지를 넘겨준다.
@@ -131,5 +149,24 @@ class UserServiceTest {
         // when
         testPolicy.upgradeLevel(testUser);
         // then
+    }
+
+    static class MockMailSender implements MailSender{ // UserServiceTest 클래스 내에서만 사용할 정적 클래스(목 오브젝트)
+        // DummyMailSender(스텁)과 비슷하나, 목 오브젝트는 관련 정보를 저장한다.
+        private final List<String> requests = new ArrayList<>();
+
+        public List<String> getRequests() {
+            return requests;
+        }
+
+        @Override
+        public void send(SimpleMailMessage simpleMessage) throws MailException {
+            requests.add(simpleMessage.getTo()[0]); // 전송 요청을 받은 이메일 주소를 저장. 여기서는 간단히 첫번째 수신자만 저장.
+        }
+
+        @Override
+        public void send(SimpleMailMessage... simpleMessages) throws MailException {
+
+        }
     }
 }

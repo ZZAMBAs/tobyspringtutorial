@@ -72,6 +72,7 @@ public class DaoFactory {
 
     @Bean // 다른 곳에서도 사용 가능성이 높고 싱글톤 사용이 가능하여 빈으로 등록
     public PlatformTransactionManager platformTransactionManager(){
+        // Javadoc: https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/PlatformTransactionManager.html
         return new DataSourceTransactionManager(this.dataSource()); // 기본 JDBC를 이용할 경우
         // return new JtaTransactionManager(); // JTA를 이용할 경우
         // return new JpaTransactionManager(); // JPA를 이용할 경우
