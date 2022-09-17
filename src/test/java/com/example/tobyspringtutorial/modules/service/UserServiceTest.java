@@ -20,16 +20,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.example.tobyspringtutorial.modules.service.UserService.MIN_LOGCOUNT_FOR_SILVER;
-import static com.example.tobyspringtutorial.modules.service.UserService.MIN_RECCOUNT_FOR_GOLD;
+import static com.example.tobyspringtutorial.modules.service.UserServiceImpl.MIN_LOGCOUNT_FOR_SILVER;
+import static com.example.tobyspringtutorial.modules.service.UserServiceImpl.MIN_RECCOUNT_FOR_GOLD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 @SpringBootTest(classes = DaoFactory.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class UserServiceTest {
-    @Autowired
+    @Autowired // 빈의 자동 주입은 일단 오브젝트 타입을 보고, 동일 타입 빈이 2개 이상이면 빈 이름과 필드 이름이 일치하는 것을 주입한다.
     private UserService userService;
+    @Autowired
+    private UserServiceImpl userServiceImpl;
     @Autowired
     private UserDao userDao;
     @Autowired
@@ -68,7 +70,7 @@ class UserServiceTest {
         UserServicePolicyDefault testPolicy = new UserServicePolicyDefault();
         testPolicy.setUserDao(this.userDao);
         testPolicy.setMailSender(mockMailSender); // 기존 DummyMailSender는 정보를 저장할 수 없어 여기서 테스트하기 힘들었다.
-        userService.setUserServicePolicy(testPolicy);
+        userServiceImpl.setUserServicePolicy(testPolicy);
 
         // when
         userService.upgradeLevels();
@@ -114,20 +116,23 @@ class UserServiceTest {
     public void upgradeAllOrNothing() {
         // given
         String testId = users.get(3).getId();
-        UserService testUserService = new UserServiceForExceptionTest();
-        testUserService.setUserDao(this.userDao); // 스프링 빈이 아니므로 수동 DI
-        testUserService.setTransactionManager(this.transactionManager);
+        UserServiceImpl testUserServiceImpl = new UserServiceForExceptionTest();
+        testUserServiceImpl.setUserDao(this.userDao); // 스프링 빈이 아니므로 수동 DI
 
         UserServicePolicyForExceptionTest testUserServicePolicy = new UserServicePolicyForExceptionTest(testId);
         testUserServicePolicy.setMailSender(this.mailSender);
         testUserServicePolicy.setUserDao(this.userDao);
+        testUserServiceImpl.setUserServicePolicy(testUserServicePolicy);
 
-        testUserService.setUserServicePolicy(testUserServicePolicy);
+        UserServiceTx testUserServiceTx = new UserServiceTx();
+        testUserServiceTx.setTransactionManager(this.transactionManager);
+        testUserServiceTx.setUserService(testUserServiceImpl);
+
         userDao.deleteAll();
         for (User user : users) userDao.add(user);
         // when
         try {
-            testUserService.upgradeLevels();
+            testUserServiceTx.upgradeLevels();
             fail("TestUserServiceException Expected");
             // Assertions.fail() 메서드에 코드가 도달하면 테스트 실패. 즉 이 코드에 오기전에 예외가 catch 되어야한다.
         }catch (TestUserServiceException e){}
@@ -169,4 +174,25 @@ class UserServiceTest {
 
         }
     }
+
+    // 아래 클래스들은 upgradeAllOrNothing 테스트를 위해서만 사용한다.
+    static class UserServiceForExceptionTest extends UserServiceImpl {
+        public UserServiceForExceptionTest() {
+        }
+    }
+
+    static class UserServicePolicyForExceptionTest extends UserServicePolicyDefault{
+        private final String id;
+
+        public UserServicePolicyForExceptionTest(String id) {
+            this.id = id;
+        }
+
+        @Override
+        public void upgradeLevel(User user) {
+            if (user.getId().equals(this.id)) throw new TestUserServiceException();
+            super.upgradeLevel(user);
+        }
+    }
+
 }

@@ -6,8 +6,8 @@ import com.example.tobyspringtutorial.modules.repository.UserDao;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 
-import static com.example.tobyspringtutorial.modules.service.UserService.MIN_LOGCOUNT_FOR_SILVER;
-import static com.example.tobyspringtutorial.modules.service.UserService.MIN_RECCOUNT_FOR_GOLD;
+import static com.example.tobyspringtutorial.modules.service.UserServiceImpl.MIN_LOGCOUNT_FOR_SILVER;
+import static com.example.tobyspringtutorial.modules.service.UserServiceImpl.MIN_RECCOUNT_FOR_GOLD;
 
 public class UserServicePolicyDefault implements UserServicePolicy{ // 평소 업그레이드 정책.
     private UserDao userDao;

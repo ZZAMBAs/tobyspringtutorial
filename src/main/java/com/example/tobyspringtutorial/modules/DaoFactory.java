@@ -4,10 +4,7 @@ import com.example.tobyspringtutorial.modules.objects.Level;
 import com.example.tobyspringtutorial.modules.objects.User;
 import com.example.tobyspringtutorial.modules.repository.UserDao;
 import com.example.tobyspringtutorial.modules.repository.UserDaoJdbc;
-import com.example.tobyspringtutorial.modules.service.DummyMailSender;
-import com.example.tobyspringtutorial.modules.service.UserService;
-import com.example.tobyspringtutorial.modules.service.UserServicePolicy;
-import com.example.tobyspringtutorial.modules.service.UserServicePolicyDefault;
+import com.example.tobyspringtutorial.modules.service.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.RowMapper;
@@ -55,11 +52,11 @@ public class DaoFactory {
 
     @Bean
     public UserService userService(){
-        UserService userService = new UserService();
-        userService.setUserDao(userDao());
-        userService.setTransactionManager(platformTransactionManager());
-        userService.setUserServicePolicy(userServicePolicy());
-        return userService;
+        // Client -> UserServiceTx -> UserServiceImpl 순. 트랜잭션 처리가 비즈니스 로직 처리보다 앞선다.
+        UserServiceTx userServiceTx = new UserServiceTx();
+        userServiceTx.setUserService(userServiceImpl());
+        userServiceTx.setTransactionManager(transactionManager());
+        return userServiceTx;
     }
 
     @Bean
@@ -71,7 +68,7 @@ public class DaoFactory {
     }
 
     @Bean // 다른 곳에서도 사용 가능성이 높고 싱글톤 사용이 가능하여 빈으로 등록
-    public PlatformTransactionManager platformTransactionManager(){
+    public PlatformTransactionManager transactionManager(){
         // Javadoc: https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/PlatformTransactionManager.html
         return new DataSourceTransactionManager(this.dataSource()); // 기본 JDBC를 이용할 경우
         // return new JtaTransactionManager(); // JTA를 이용할 경우
@@ -85,5 +82,13 @@ public class DaoFactory {
         DummyMailSender mailSender = new DummyMailSender();// 구체적으로 사용할 MailSender 정의
         // mailSender.setHost("mail.server.com"); // 메일 서버 지정
         return mailSender;
+    }
+
+    @Bean
+    public UserServiceImpl userServiceImpl(){
+        UserServiceImpl userServiceImpl = new UserServiceImpl();
+        userServiceImpl.setUserDao(userDao());
+        userServiceImpl.setUserServicePolicy(userServicePolicy());
+        return userServiceImpl;
     }
 }
