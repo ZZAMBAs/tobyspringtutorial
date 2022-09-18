@@ -59,32 +59,37 @@ class UserServiceTest {
     }
 
     @Test
-    @DirtiesContext // DI를 바꿔야 되는 경우 표기하는 어노테이션. 이 어노테이션으로 인해 재활용하던 빈을 테스트 후 재생성한다.
-    // https://shortstories.gitbooks.io/studybook/content/dirtiescontext.html
-    public void upgradeLevels() {
+    @DirtiesContext
+    public void upgradeLevels() { // 고립 테스트로써 재정의. 의존 관계인 모든 모듈을 목 오브젝트 또는 스텁으로 대체한다.
+        // 고립 테스트는 다른 의존 모듈을 가져오지 않기에 테스트 실행 속도가 더 빨라진다.
         // given
-        userDao.deleteAll();
-        for (User user : users) userDao.add(user);
-
+        UserServiceImpl userServiceImpl = new UserServiceImpl(); // 고립 테스트는 테스트 대상 오브젝트를 직접 생성한다.
         MockMailSender mockMailSender = new MockMailSender();
+        MockUserDao mockUserDao = new MockUserDao(this.users);
+
         UserServicePolicyDefault testPolicy = new UserServicePolicyDefault();
-        testPolicy.setUserDao(this.userDao);
-        testPolicy.setMailSender(mockMailSender); // 기존 DummyMailSender는 정보를 저장할 수 없어 여기서 테스트하기 힘들었다.
+        testPolicy.setUserDao(mockUserDao);
+        testPolicy.setMailSender(mockMailSender);
+
+        userServiceImpl.setUserDao(mockUserDao);
         userServiceImpl.setUserServicePolicy(testPolicy);
-
         // when
-        userService.upgradeLevels();
-        checkLevelUpgradeOccurred(users.get(0), false);
-        checkLevelUpgradeOccurred(users.get(1), true);
-        checkLevelUpgradeOccurred(users.get(2), false);
-        checkLevelUpgradeOccurred(users.get(3), true);
-        checkLevelUpgradeOccurred(users.get(4), false); // 위 결과들(성공 시 이메일 저장)은 목 오브젝트 내에 저장된다.
-
+        userServiceImpl.upgradeLevels();
         // then
+        List<User> updated = mockUserDao.getUpdated();
+        assertThat(updated.size()).isEqualTo(2); // 업데이트가 2번만 일어났는지 검증한다.
+        checkUserAndLevel(updated.get(0), users.get(1).getId(), Level.SILVER); // 제대로 업데이트 되었는지 검증한다.
+        checkUserAndLevel(updated.get(1), users.get(3).getId(), Level.GOLD);
+
         List<String> requests = mockMailSender.getRequests();
         assertThat(requests.size()).isEqualTo(2);
         assertThat(requests.get(0)).isEqualTo(users.get(1).getEmail());
         assertThat(requests.get(1)).isEqualTo(users.get(3).getEmail());
+    }
+
+    private void checkUserAndLevel(User updated, String expectedId, Level expectedLevel) {
+        assertThat(updated.getId()).isEqualTo(expectedId);
+        assertThat(updated.getLevel()).isEqualTo(expectedLevel);
     }
 
     private void checkLevelUpgradeOccurred(User user, boolean expected){ // 리팩토링. 이제 2번째 파라미터는 업그레이드 되어야 하는지를 넘겨준다.
@@ -154,6 +159,46 @@ class UserServiceTest {
         // when
         testPolicy.upgradeLevel(testUser);
         // then
+    }
+
+
+    //목 오브젝트는
+    static class MockUserDao implements UserDao{
+        private final List<User> users; // 레벨 업그레이드 후보 User 오브젝트 목록
+        private final List<User> updated = new ArrayList<>(); // 업그레이드 대상 User 오브젝트 저장 목록
+
+        private MockUserDao(List<User> users) {
+            this.users = users;
+        }
+
+        public List<User> getUpdated() {
+            return this.updated;
+        }
+
+        // 스텁 기능 제공 (단순히 미리 준비된 목록을 제공할 경우)
+        @Override
+        public List<User> getAll() {
+            return this.users;
+        }
+
+        // 목 오브젝트 기능 제공 (해당 메서드가 사용되었는지 기록 + 검증하기 위함)
+        @Override
+        public void update(User user) {
+            updated.add(user);
+        }
+
+        // 아래는 테스트에 사용하지 않는 메서드들이다. 해당 예외를 던져 이를 사용하지 못하도록 하고 사용할 경우 개발자에게 알려주도록 한다.
+        @Override
+        public void add(User user) { throw new UnsupportedOperationException(); }
+
+        @Override
+        public User get(String id) { throw new UnsupportedOperationException(); }
+
+        @Override
+        public void deleteAll() { throw new UnsupportedOperationException(); }
+
+        @Override
+        public int getCount() { throw new UnsupportedOperationException(); }
     }
 
     static class MockMailSender implements MailSender{ // UserServiceTest 클래스 내에서만 사용할 정적 클래스(목 오브젝트)
