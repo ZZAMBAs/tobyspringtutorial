@@ -8,6 +8,7 @@ import com.example.tobyspringtutorial.modules.repository.UserDao;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mail.MailException;
@@ -24,6 +25,7 @@ import static com.example.tobyspringtutorial.modules.service.UserServiceImpl.MIN
 import static com.example.tobyspringtutorial.modules.service.UserServiceImpl.MIN_RECCOUNT_FOR_GOLD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest(classes = DaoFactory.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -60,10 +62,10 @@ class UserServiceTest {
 
     @Test
     @DirtiesContext
-    public void upgradeLevels() { // 고립 테스트로써 재정의. 의존 관계인 모든 모듈을 목 오브젝트 또는 스텁으로 대체한다.
-        // 고립 테스트는 다른 의존 모듈을 가져오지 않기에 테스트 실행 속도가 더 빨라진다.
+    public void upgradeLevels() { // 단위 테스트로써 재정의. 의존 관계인 모든 모듈을 목 오브젝트 또는 스텁으로 대체한다.
+        // 단위 테스트는 다른 의존 모듈을 가져오지 않기에 테스트 실행 속도가 더 빨라진다.
         // given
-        UserServiceImpl userServiceImpl = new UserServiceImpl(); // 고립 테스트는 테스트 대상 오브젝트를 직접 생성한다.
+        UserServiceImpl userServiceImpl = new UserServiceImpl(); // 단위 테스트는 테스트 대상 오브젝트를 직접 생성한다.
         MockMailSender mockMailSender = new MockMailSender();
         MockUserDao mockUserDao = new MockUserDao(this.users);
 
@@ -85,6 +87,43 @@ class UserServiceTest {
         assertThat(requests.size()).isEqualTo(2);
         assertThat(requests.get(0)).isEqualTo(users.get(1).getEmail());
         assertThat(requests.get(1)).isEqualTo(users.get(3).getEmail());
+    }
+
+    @Test
+    public void mockUpgradeLevels(){ // mockito 프레임워크를 이용한 upgradeLevels 테스트
+        // mockito Javadoc: https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#method.detail
+        // 사용법: https://scshim.tistory.com/439
+        // given
+        UserServiceImpl userServiceImpl = new UserServiceImpl();
+
+        UserDao mockUserDao = mock(UserDao.class); // 해당 인터페이스의 목 오브젝트 자동 생성.
+        when(mockUserDao.getAll()).thenReturn(this.users); // mockUserDao가 getAll() 메서드 실행 시 users 목록을 리턴하도록 설정.
+        // mockito는 자동으로 호출 기록을 남긴다.
+        userServiceImpl.setUserDao(mockUserDao);
+
+        MailSender mockMailSender = mock(MailSender.class);
+        UserServicePolicyDefault testPolicy = new UserServicePolicyDefault();
+        testPolicy.setUserDao(mockUserDao);
+        testPolicy.setMailSender(mockMailSender);
+
+        userServiceImpl.setUserServicePolicy(testPolicy);
+        // when
+        userServiceImpl.upgradeLevels();
+        // then
+        verify(mockUserDao, times(2)).update(any(User.class)); // mockito에서 검증하는 메서드.
+        // any를 이용하면 파라미터 내용은 무시한다.
+        verify(mockUserDao).update(users.get(1)); // 실제 파라미터 검사. users.get(1)을 파라미터로 update가 호출된 적 있는지 확인한다.
+        assertThat(users.get(1).getLevel()).isEqualTo(Level.SILVER);
+        verify(mockUserDao).update(users.get(3));
+        assertThat(users.get(3).getLevel()).isEqualTo(Level.GOLD);
+
+        // ArgumentCaptor를 이용해 mockMailSender 오브젝트에 전달된 파라미터를 가져와 검증에 사용했다.
+        ArgumentCaptor<SimpleMailMessage> mailMessageArg = ArgumentCaptor.forClass(SimpleMailMessage.class);
+        verify(mockMailSender, times(2)).send(mailMessageArg.capture());
+        List<SimpleMailMessage> mailMessages = mailMessageArg.getAllValues();
+        assertThat(mailMessages.get(0).getTo()[0]).isEqualTo(users.get(1).getEmail());
+        assertThat(mailMessages.get(1).getTo()[0]).isEqualTo(users.get(3).getEmail());
+
     }
 
     private void checkUserAndLevel(User updated, String expectedId, Level expectedLevel) {
@@ -162,7 +201,6 @@ class UserServiceTest {
     }
 
 
-    //목 오브젝트는
     static class MockUserDao implements UserDao{
         private final List<User> users; // 레벨 업그레이드 후보 User 오브젝트 목록
         private final List<User> updated = new ArrayList<>(); // 업그레이드 대상 User 오브젝트 저장 목록
