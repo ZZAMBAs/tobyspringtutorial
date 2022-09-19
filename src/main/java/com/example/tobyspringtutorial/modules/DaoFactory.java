@@ -53,6 +53,12 @@ public class DaoFactory {
     @Bean
     public UserService userService(){
         // Client -> UserServiceTx -> UserServiceImpl 순. 트랜잭션 처리가 비즈니스 로직 처리보다 앞선다.
+        // 이런 형식의 디자인 패턴을 데코레이터 패턴이라고 한다. 기존 기능에 부가적인 기능을 추가해가는 것이 목적이다.
+        // 데코레이터 패턴: https://coding-factory.tistory.com/713
+        // 프록시 패턴과 유사하기에 잘 구분할 필요가 있다. 프록시 패턴은 단순히 접근제어(접근 방식 변경/지연)만을 목적으로 한다.
+        // 프록시 패턴: https://limkydev.tistory.com/79
+        // 프록시 패턴에서의 프록시는 단순 대체자의 의미를 지니지만 일반적인 프록시는 다른 의존 클래스(타겟)의 위임자의 의미도 지닌다.
+        // 예를 들어 userServiceTx는 프록시, 거기에서 의존하는 userServiceImpl은 타겟.
         UserServiceTx userServiceTx = new UserServiceTx();
         userServiceTx.setUserService(userServiceImpl());
         userServiceTx.setTransactionManager(transactionManager());
