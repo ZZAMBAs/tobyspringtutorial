@@ -3,8 +3,10 @@ package com.example.tobyspringtutorial.learningTests;
 import com.example.tobyspringtutorial.learningTests.forDynamicProxy.Hello;
 import com.example.tobyspringtutorial.learningTests.forDynamicProxy.HelloTarget;
 import com.example.tobyspringtutorial.learningTests.forDynamicProxy.HelloUppercase;
+import com.example.tobyspringtutorial.learningTests.forDynamicProxy.UppercaseHandler;
 import org.junit.jupiter.api.Test;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,6 +37,20 @@ public class ReflectionTest {
         assertThat(hello.sayHi("Toby")).isEqualTo("Hi, Toby");
         assertThat(hello.sayThankYou("Toby")).isEqualTo("Thank You, Toby");
 
+        assertThat(proxiedHello.sayHello("Toby")).isEqualTo("HELLO, TOBY");
+        assertThat(proxiedHello.sayHi("Toby")).isEqualTo("HI, TOBY");
+        assertThat(proxiedHello.sayThankYou("Toby")).isEqualTo("THANK YOU, TOBY");
+    }
+
+    @Test
+    public void simpleDynamicProxy(){
+        // given
+        Hello proxiedHello = (Hello) Proxy.newProxyInstance( // 다이나믹 프록시 오브젝트를 생성.
+                // JVM 클래스 로더에 대해: https://steady-coding.tistory.com/593
+                getClass().getClassLoader(), // 동적으로 생성되는 다이나믹 프록시 클래스의 로딩에 사용할 클래스 로더
+                new Class[]{ Hello.class }, // 구현할 인터페이스. 여러개 구현도 가능해서 배열로 담는다.
+                new UppercaseHandler(new HelloTarget())); // 부가기능과 위임 코드를 담은 InvocationHandler 구현 오브젝트
+        // then
         assertThat(proxiedHello.sayHello("Toby")).isEqualTo("HELLO, TOBY");
         assertThat(proxiedHello.sayHi("Toby")).isEqualTo("HI, TOBY");
         assertThat(proxiedHello.sayThankYou("Toby")).isEqualTo("THANK YOU, TOBY");
