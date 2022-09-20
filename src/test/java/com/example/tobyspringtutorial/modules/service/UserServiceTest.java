@@ -17,6 +17,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -39,7 +40,7 @@ class UserServiceTest {
     @Autowired
     private PlatformTransactionManager transactionManager;
     @Autowired
-    MailSender mailSender;
+    private MailSender mailSender;
     List<User> users;
 
     @BeforeAll
@@ -168,15 +169,18 @@ class UserServiceTest {
         testUserServicePolicy.setUserDao(this.userDao);
         testUserServiceImpl.setUserServicePolicy(testUserServicePolicy);
 
-        UserServiceTx testUserServiceTx = new UserServiceTx();
-        testUserServiceTx.setTransactionManager(this.transactionManager);
-        testUserServiceTx.setUserService(testUserServiceImpl);
+        TransactionHandler txHandler = new TransactionHandler();
+        txHandler.setTarget(testUserServiceImpl);
+        txHandler.setTransactionManager(this.transactionManager);
+        txHandler.setPattern("upgradeLevels");
+        UserService txUserService = (UserService) Proxy.newProxyInstance(getClass().getClassLoader(),
+                new Class[]{UserService.class}, txHandler); // 다이나믹 프록시 생성
 
         userDao.deleteAll();
         for (User user : users) userDao.add(user);
         // when
         try {
-            testUserServiceTx.upgradeLevels();
+            txUserService.upgradeLevels();
             fail("TestUserServiceException Expected");
             // Assertions.fail() 메서드에 코드가 도달하면 테스트 실패. 즉 이 코드에 오기전에 예외가 catch 되어야한다.
         }catch (TestUserServiceException e){}
