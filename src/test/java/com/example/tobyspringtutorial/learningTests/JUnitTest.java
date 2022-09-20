@@ -1,6 +1,6 @@
-package com.example.tobyspringtutorial;
+package com.example.tobyspringtutorial.learningTests;
 
-import com.example.tobyspringtutorial.config_for_test.JUnitConfig;
+import com.example.tobyspringtutorial.configForTest.JUnitConfig;
 import com.example.tobyspringtutorial.modules.repository.UserDao;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -12,8 +12,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.internal.bytebuddy.matcher.ElementMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 // JUnit이 테스트 메서드를 실행할 때마다 새로운 테스트 오브젝트를 생성하는지 알아보는 테스트

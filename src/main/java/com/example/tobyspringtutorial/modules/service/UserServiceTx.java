@@ -7,6 +7,7 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 // 트랜잭션 관련 작업만 하고 나머지 실제 비즈니스 로직은 구현된 클래스에 위임.
 // 타깃의 인터페이스를 구현하고 위임하는 코드 작성의 번거로움, 부가기능 코드 중복 가능성 등 때문에 프록시를 만드는 것이 번거롭다.
+// 자바 리플렉션(Reflection)은 이를 조금이나마 효율적이게 해준다. Java Reflection: https://codechacha.com/ko/reflection/
 public class UserServiceTx implements UserService{
     private UserService userService; // 타겟 오브젝트
     private PlatformTransactionManager transactionManager;

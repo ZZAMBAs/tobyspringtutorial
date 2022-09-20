@@ -1,4 +1,4 @@
-package com.example.tobyspringtutorial;
+package com.example.tobyspringtutorial.learningTests;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

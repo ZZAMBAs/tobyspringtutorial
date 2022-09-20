@@ -1,4 +1,4 @@
-package com.example.tobyspringtutorial;
+package com.example.tobyspringtutorial.learningTests;
 
 import com.example.tobyspringtutorial.calculator.Calculator;
 import org.junit.jupiter.api.BeforeAll;
