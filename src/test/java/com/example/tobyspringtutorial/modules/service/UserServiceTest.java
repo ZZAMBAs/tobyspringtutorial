@@ -5,19 +5,18 @@ import com.example.tobyspringtutorial.modules.exception.TestUserServiceException
 import com.example.tobyspringtutorial.modules.objects.Level;
 import com.example.tobyspringtutorial.modules.objects.User;
 import com.example.tobyspringtutorial.modules.repository.UserDao;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 import org.springframework.mail.MailException;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,9 +28,10 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest(classes = DaoFactory.class)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class UserServiceTest {
-    @Autowired // 빈의 자동 주입은 일단 오브젝트 타입을 보고, 동일 타입 빈이 2개 이상이면 빈 이름과 필드 이름이 일치하는 것을 주입한다.
+    @Autowired
+    private ApplicationContext ac;
+    @Autowired
     private UserService userService;
     @Autowired
     private UserServiceImpl userServiceImpl;
@@ -43,7 +43,7 @@ class UserServiceTest {
     private MailSender mailSender;
     List<User> users;
 
-    @BeforeAll
+    @BeforeEach
     public void setUp(){
         users = Arrays.asList( // 배열을 리스트로 만들어주는 편리한 메서드. 배열을 가변 인자로 넣어주면 더욱 편리.
                 // 한글 깨질 시, 인코딩을 모두 UTF-8로 해준다. DB 설정도 필수.
@@ -158,8 +158,10 @@ class UserServiceTest {
     }
 
     @Test
+    @DirtiesContext // 팩토리 빈을 직접 가져와서 팩토리 빈 내부 타겟을 테스트용으로 수정하므로 넣어주었다.
     public void upgradeAllOrNothing() {
         // given
+        TxProxyFactoryBean txProxyFactoryBean = ac.getBean("&userService", TxProxyFactoryBean.class);
         String testId = users.get(3).getId();
         UserServiceImpl testUserServiceImpl = new UserServiceForExceptionTest();
         testUserServiceImpl.setUserDao(this.userDao); // 스프링 빈이 아니므로 수동 DI
@@ -169,12 +171,8 @@ class UserServiceTest {
         testUserServicePolicy.setUserDao(this.userDao);
         testUserServiceImpl.setUserServicePolicy(testUserServicePolicy);
 
-        TransactionHandler txHandler = new TransactionHandler();
-        txHandler.setTarget(testUserServiceImpl);
-        txHandler.setTransactionManager(this.transactionManager);
-        txHandler.setPattern("upgradeLevels");
-        UserService txUserService = (UserService) Proxy.newProxyInstance(getClass().getClassLoader(),
-                new Class[]{UserService.class}, txHandler); // 다이나믹 프록시 생성
+        txProxyFactoryBean.setTarget(testUserServiceImpl);
+        UserService txUserService = (UserService) txProxyFactoryBean.getObject();
 
         userDao.deleteAll();
         for (User user : users) userDao.add(user);

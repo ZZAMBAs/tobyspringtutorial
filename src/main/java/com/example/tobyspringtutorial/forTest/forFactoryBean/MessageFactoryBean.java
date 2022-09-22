@@ -4,6 +4,8 @@ import org.springframework.beans.factory.FactoryBean;
 
 // 팩토리 빈은 스프링을 대신해 오브젝트 생성로직을 담당하도록 만들어진 특별한 빈을 말한다.
 // 스프링은 팩토리 빈을 구현한 클래스를 빈으로 등록하면 해당 클래스의 getObject()로 오브젝트를 가져오고 이를 빈 오브젝트로 사용한다.
+// 팩토리 빈은 외부에서 생성자가 제한되고 static으로만 오브젝트를 생성할 수 있게 한 클래스가 있을 때 해당 클래스 오브젝트를 빈에 등록하고 싶을 때 사용한다.
+// 다이나믹 팩토리가 그 예시에 해당한다. 다이나믹 팩토리를 빈으로 등록하려면 팩토리 빈으로 등록하여야 한다.
 public class MessageFactoryBean implements FactoryBean<Message> {
     String text;
 
