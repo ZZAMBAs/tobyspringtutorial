@@ -1,5 +1,6 @@
 package com.example.tobyspringtutorial.modules;
 
+import com.example.tobyspringtutorial.forTest.forFactoryBean.MessageFactoryBean;
 import com.example.tobyspringtutorial.modules.objects.Level;
 import com.example.tobyspringtutorial.modules.objects.User;
 import com.example.tobyspringtutorial.modules.repository.UserDao;
@@ -96,5 +97,12 @@ public class DaoFactory {
         userServiceImpl.setUserDao(userDao());
         userServiceImpl.setUserServicePolicy(userServicePolicy());
         return userServiceImpl;
+    }
+
+    @Bean(name = "message") // MessageFactoryBean 클래스 참조
+    public MessageFactoryBean messageFactoryBean(){
+        MessageFactoryBean messageFactoryBean = new MessageFactoryBean();
+        messageFactoryBean.setText("Factory Bean");
+        return messageFactoryBean;
     }
 }

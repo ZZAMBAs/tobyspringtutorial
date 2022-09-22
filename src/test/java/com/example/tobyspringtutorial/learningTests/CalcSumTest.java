@@ -1,6 +1,6 @@
 package com.example.tobyspringtutorial.learningTests;
 
-import com.example.tobyspringtutorial.calculator.Calculator;
+import com.example.tobyspringtutorial.forTest.calculator.Calculator;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
