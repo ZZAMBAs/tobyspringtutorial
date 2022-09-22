@@ -4,7 +4,11 @@ import com.example.tobyspringtutorial.learningTests.forDynamicProxy.Hello;
 import com.example.tobyspringtutorial.learningTests.forDynamicProxy.HelloTarget;
 import com.example.tobyspringtutorial.learningTests.forDynamicProxy.HelloUppercase;
 import com.example.tobyspringtutorial.learningTests.forDynamicProxy.UppercaseHandler;
+import org.aopalliance.intercept.MethodInterceptor;
+import org.aopalliance.intercept.MethodInvocation;
 import org.junit.jupiter.api.Test;
+import org.springframework.aop.framework.ProxyFactoryBean;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
@@ -12,7 +16,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 // https://kdg-is.tistory.com/entry/JAVA-%EB%A6%AC%ED%94%8C%EB%A0%89%EC%85%98-Reflection%EC%9D%B4%EB%9E%80
 // 다이나믹 프록시를 설명하기 전에 리플렉션을 알아둬야 함. 그것이 전제기 때문.
-public class ReflectionTest {
+public class ProxyTest {
+
+    // Reflection 테스트
     @Test
     public void invokeMethod() throws Exception{
         // given
@@ -54,5 +60,29 @@ public class ReflectionTest {
         assertThat(proxiedHello.sayHello("Toby")).isEqualTo("HELLO, TOBY");
         assertThat(proxiedHello.sayHi("Toby")).isEqualTo("HI, TOBY");
         assertThat(proxiedHello.sayThankYou("Toby")).isEqualTo("THANK YOU, TOBY");
+    }
+
+    @Test
+    public void proxyFactoryBean(){
+        // given
+        ProxyFactoryBean pfBean = new ProxyFactoryBean(); // 스프링에서 지원하는 프록시 팩토리 빈
+        pfBean.setTarget(new HelloTarget()); // 타겟 설정
+        pfBean.addAdvice(new UppercaseAdvice()); // 부가기능 추가 메서드
+        // when
+        Hello proxiedHello = (Hello) pfBean.getObject();
+        // then
+        assertThat(proxiedHello.sayHello("Toby")).isEqualTo("HELLO, TOBY");
+        assertThat(proxiedHello.sayHi("Toby")).isEqualTo("HI, TOBY");
+        assertThat(proxiedHello.sayThankYou("Toby")).isEqualTo("THANK YOU, TOBY");
+    }
+
+    static class UppercaseAdvice implements MethodInterceptor{ // InvocationHandler 역할을 MethodInterceptor가 한다.
+        @Override
+        public Object invoke(MethodInvocation invocation) throws Throwable {
+            String ret = (String) invocation.proceed();
+            // Reflection의 Method와 달리 메서드 실행 시 타겟 오브젝트를 전달할 필요가 없다.
+            // MethodInvocation은 메서드 정보와 함께 타겟 오브젝트를 이미 알고 있기 때문.
+            return ret.toUpperCase(); // 부가기능 적용.
+        }
     }
 }
