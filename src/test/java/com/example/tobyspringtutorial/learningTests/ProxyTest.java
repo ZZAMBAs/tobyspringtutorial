@@ -8,6 +8,8 @@ import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.junit.jupiter.api.Test;
 import org.springframework.aop.framework.ProxyFactoryBean;
+import org.springframework.aop.support.DefaultPointcutAdvisor;
+import org.springframework.aop.support.NameMatchMethodPointcut;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -62,24 +64,44 @@ public class ProxyTest {
         assertThat(proxiedHello.sayThankYou("Toby")).isEqualTo("THANK YOU, TOBY");
     }
 
+    // 스프링 프록시 팩토리 빈 테스트
     @Test
     public void proxyFactoryBean(){
         // given
-        ProxyFactoryBean pfBean = new ProxyFactoryBean(); // 스프링에서 지원하는 프록시 팩토리 빈
+        ProxyFactoryBean pfBean = new ProxyFactoryBean(); // 스프링에서 지원하는 프록시 팩토리 빈. 타겟 오브젝트에 종속되지 않는다.
         pfBean.setTarget(new HelloTarget()); // 타겟 설정
         pfBean.addAdvice(new UppercaseAdvice()); // 부가기능 추가 메서드
+        // 타겟 오브젝트에 적용하는 부가기능을 담은 오브젝트를 스프링에서는 어드바이스(Advice)라고 한다.
         // when
-        Hello proxiedHello = (Hello) pfBean.getObject();
+        Hello proxiedHello = (Hello) pfBean.getObject(); // 인터페이스 자동검출 기능이 있어 Hello 인터페이스로 바로 가져온다.
         // then
         assertThat(proxiedHello.sayHello("Toby")).isEqualTo("HELLO, TOBY");
         assertThat(proxiedHello.sayHi("Toby")).isEqualTo("HI, TOBY");
         assertThat(proxiedHello.sayThankYou("Toby")).isEqualTo("THANK YOU, TOBY");
     }
 
+    // 스프링 프록시 팩토리 빈 + 포인트 컷(부가기능을 적용할 메서드를 선택하는 알고리즘을 담은 오브젝트) 학습 테스트
+    @Test
+    public void pointcutAdvisor(){
+        // given
+        ProxyFactoryBean pfBean = new ProxyFactoryBean();
+        pfBean.setTarget(new HelloTarget());
+
+        NameMatchMethodPointcut pointcut = new NameMatchMethodPointcut(); // pointcut 인터페이스를 적용한 이미 구현된 클래스로, 메서드 이름을 비교해서 대상을 선정하는 알고리즘을 제공.
+        pointcut.setMappedName("sayH*"); // sayH로 시작하는 모든 메서드를 선택하게끔 설정.
+        pfBean.addAdvisor(new DefaultPointcutAdvisor(pointcut, new UppercaseAdvice())); // addAdvisor 로 포인트 컷과 어드바이스를 묶어 추가가 가능하다.
+        Hello proxiedHello = (Hello) pfBean.getObject();
+
+        // then
+        assertThat(proxiedHello.sayHello("Toby")).isEqualTo("HELLO, TOBY");
+        assertThat(proxiedHello.sayHi("Toby")).isEqualTo("HI, TOBY");
+        assertThat(proxiedHello.sayThankYou("Toby")).isEqualTo("Thank You, Toby"); // 조건에 부합하지 않음.
+    }
+
     static class UppercaseAdvice implements MethodInterceptor{ // InvocationHandler 역할을 MethodInterceptor가 한다.
         @Override
         public Object invoke(MethodInvocation invocation) throws Throwable {
-            String ret = (String) invocation.proceed();
+            String ret = (String) invocation.proceed(); // proceed() 메서드는 타겟 오브젝트 내부 메서드를 실행한다.
             // Reflection의 Method와 달리 메서드 실행 시 타겟 오브젝트를 전달할 필요가 없다.
             // MethodInvocation은 메서드 정보와 함께 타겟 오브젝트를 이미 알고 있기 때문.
             return ret.toUpperCase(); // 부가기능 적용.
