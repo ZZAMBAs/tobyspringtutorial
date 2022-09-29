@@ -6,6 +6,9 @@ import com.example.tobyspringtutorial.modules.objects.User;
 import com.example.tobyspringtutorial.modules.repository.UserDao;
 import com.example.tobyspringtutorial.modules.repository.UserDaoJdbc;
 import com.example.tobyspringtutorial.modules.service.*;
+import org.springframework.aop.framework.ProxyFactoryBean;
+import org.springframework.aop.support.DefaultPointcutAdvisor;
+import org.springframework.aop.support.NameMatchMethodPointcut;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.RowMapper;
@@ -54,7 +57,7 @@ public class DaoFactory {
     // 프록시 팩토리 빈 단점: 빈 오브젝트가 계속 새로 생겨남, 여러 클래스에 공통 부가기능 제공 불가, 한 클래스에 여러 부가기능 부여 시, 빈 생성 코드가 그 수만큼 늘고 중복적임.
     // 스프링은 이 단점을 해소해주는 프록시 팩토리 빈을 제공한다. 스프링은 프록시 오브젝트를 생성해주는 기술을 추상화한 팩토리 빈을 제공한다.
     @Bean
-    public TxProxyFactoryBean userService(){
+    public TxProxyFactoryBean duplicatedUserService(){
         TxProxyFactoryBean txProxyFactoryBean = new TxProxyFactoryBean();
         txProxyFactoryBean.setPattern("upgradeLevels");
         txProxyFactoryBean.setTransactionManager(transactionManager());
@@ -102,5 +105,35 @@ public class DaoFactory {
         MessageFactoryBean messageFactoryBean = new MessageFactoryBean();
         messageFactoryBean.setText("Factory Bean");
         return messageFactoryBean;
+    }
+
+    // 트랜잭션을 위한 어드바이스를 빈으로 등록
+    @Bean
+    public TransactionAdvice transactionAdvice(){
+        TransactionAdvice transactionAdvice = new TransactionAdvice();
+        transactionAdvice.setTransactionManager(transactionManager());
+        return transactionAdvice;
+    }
+
+    // 트랜잭션을 적용할 포인트 컷
+    @Bean
+    public NameMatchMethodPointcut transactionPointcut(){
+        NameMatchMethodPointcut pointcut = new NameMatchMethodPointcut();
+        pointcut.setMappedName("upgrade*");
+        return pointcut;
+    }
+
+    // 트랜잭션을 위한 어드바이저
+    @Bean
+    public DefaultPointcutAdvisor transactionAdvisor(){
+        return new DefaultPointcutAdvisor(transactionPointcut(), transactionAdvice());
+    }
+
+    @Bean
+    public ProxyFactoryBean userService(){
+        ProxyFactoryBean pfBean = new ProxyFactoryBean();
+        pfBean.setTarget(userServiceImpl());
+        pfBean.setInterceptorNames("transactionAdvisor"); // 어드바이스 또는 어드바이저를 설정하는 메서드. 빈 아이디 값을 넣어준다.
+        return pfBean;
     }
 }

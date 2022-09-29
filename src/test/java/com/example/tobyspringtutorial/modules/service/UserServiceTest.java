@@ -8,6 +8,7 @@ import com.example.tobyspringtutorial.modules.repository.UserDao;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.aop.framework.ProxyFactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
@@ -161,7 +162,7 @@ class UserServiceTest {
     @DirtiesContext // 팩토리 빈을 직접 가져와서 팩토리 빈 내부 타겟을 테스트용으로 수정하므로 넣어주었다.
     public void upgradeAllOrNothing() {
         // given
-        TxProxyFactoryBean txProxyFactoryBean = ac.getBean("&userService", TxProxyFactoryBean.class);
+        ProxyFactoryBean txProxyFactoryBean = ac.getBean("&userService", ProxyFactoryBean.class);
         String testId = users.get(3).getId();
         UserServiceImpl testUserServiceImpl = new UserServiceForExceptionTest();
         testUserServiceImpl.setUserDao(this.userDao); // 스프링 빈이 아니므로 수동 DI

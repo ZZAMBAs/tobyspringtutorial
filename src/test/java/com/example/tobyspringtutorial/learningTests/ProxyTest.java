@@ -90,6 +90,7 @@ public class ProxyTest {
         NameMatchMethodPointcut pointcut = new NameMatchMethodPointcut(); // pointcut 인터페이스를 적용한 이미 구현된 클래스로, 메서드 이름을 비교해서 대상을 선정하는 알고리즘을 제공.
         pointcut.setMappedName("sayH*"); // sayH로 시작하는 모든 메서드를 선택하게끔 설정.
         pfBean.addAdvisor(new DefaultPointcutAdvisor(pointcut, new UppercaseAdvice())); // addAdvisor 로 포인트 컷과 어드바이스를 묶어 추가가 가능하다.
+        // 어드바이저 = 어드바이스 + 포인트 컷.
         Hello proxiedHello = (Hello) pfBean.getObject();
 
         // then
