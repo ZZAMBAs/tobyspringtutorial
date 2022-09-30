@@ -7,6 +7,8 @@ import com.example.tobyspringtutorial.learningTests.forDynamicProxy.UppercaseHan
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.junit.jupiter.api.Test;
+import org.springframework.aop.ClassFilter;
+import org.springframework.aop.Pointcut;
 import org.springframework.aop.framework.ProxyFactoryBean;
 import org.springframework.aop.support.DefaultPointcutAdvisor;
 import org.springframework.aop.support.NameMatchMethodPointcut;
@@ -108,4 +110,51 @@ public class ProxyTest {
             return ret.toUpperCase(); // 부가기능 적용.
         }
     }
+
+    // 사실 포인트 컷은 메서드 선정 알고리즘 기능에 추가로 클래스 선정 알고리즘도 가지고 있다. Pointcut 인터페이스의 getClassFilter()가 그것.
+    @Test
+    public void classNamePointcutAdvisor(){
+        // given
+        // 포인트 컷을 준비. 여기서만 사용할 것이기에 익명 내부 클래스로 정의하였음.
+        NameMatchMethodPointcut classMethodPointcut = new NameMatchMethodPointcut() {
+            @Override
+            public ClassFilter getClassFilter() {
+                return new ClassFilter() { // 람다식을 변경 가능.
+                    @Override
+                    public boolean matches(Class<?> clazz) {
+                        return clazz.getSimpleName().startsWith("HelloT"); // 클래스 이름이 HelloT 로 시작하는 것만 선정.
+                        // getName(): 패키지 포함한 클래스 이름 반환. getSimpleName(): 패키지 명은 제외.
+                    }
+                };
+            }
+        };
+        // when
+        classMethodPointcut.setMappedName("sayH*");
+        // then
+        checkAdviced(new HelloTarget(), classMethodPointcut, true);
+
+        class HelloWorld extends HelloTarget {}
+        checkAdviced(new HelloWorld(), classMethodPointcut, false);
+
+        class HelloToby extends HelloTarget {}
+        checkAdviced(new HelloToby(), classMethodPointcut, true);
+    }
+
+    private void checkAdviced(Object target, Pointcut pointcut, boolean adviced) {
+        ProxyFactoryBean pfBean = new ProxyFactoryBean();
+        pfBean.setTarget(target);
+        pfBean.addAdvisor(new DefaultPointcutAdvisor(pointcut, new UppercaseAdvice()));
+        Hello proxiedHello = (Hello) pfBean.getObject();
+
+        if (adviced) {
+            assertThat(proxiedHello.sayHello("Toby")).isEqualTo("HELLO, TOBY");
+            assertThat(proxiedHello.sayHi("Toby")).isEqualTo("HI, TOBY");
+        }
+        else{
+            assertThat(proxiedHello.sayHello("Toby")).isEqualTo("Hello, Toby");
+            assertThat(proxiedHello.sayHi("Toby")).isEqualTo("Hi, Toby");
+        }
+        assertThat(proxiedHello.sayThankYou("Toby")).isEqualTo("Thank You, Toby");
+    }
+
 }
