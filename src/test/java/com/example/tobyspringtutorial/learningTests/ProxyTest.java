@@ -119,7 +119,7 @@ public class ProxyTest {
         NameMatchMethodPointcut classMethodPointcut = new NameMatchMethodPointcut() {
             @Override
             public ClassFilter getClassFilter() {
-                return new ClassFilter() { // 람다식을 변경 가능.
+                return new ClassFilter() { // 람다식으로 변경 가능.
                     @Override
                     public boolean matches(Class<?> clazz) {
                         return clazz.getSimpleName().startsWith("HelloT"); // 클래스 이름이 HelloT 로 시작하는 것만 선정.

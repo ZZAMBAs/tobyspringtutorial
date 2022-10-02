@@ -1,12 +1,13 @@
 package com.example.tobyspringtutorial.modules;
 
 import com.example.tobyspringtutorial.forTest.forFactoryBean.MessageFactoryBean;
+import com.example.tobyspringtutorial.forTest.service.TestUserServicePolicy;
 import com.example.tobyspringtutorial.modules.objects.Level;
 import com.example.tobyspringtutorial.modules.objects.User;
 import com.example.tobyspringtutorial.modules.repository.UserDao;
 import com.example.tobyspringtutorial.modules.repository.UserDaoJdbc;
 import com.example.tobyspringtutorial.modules.service.*;
-import org.springframework.aop.framework.ProxyFactoryBean;
+import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
 import org.springframework.aop.support.DefaultPointcutAdvisor;
 import org.springframework.aop.support.NameMatchMethodPointcut;
 import org.springframework.context.annotation.Bean;
@@ -54,18 +55,6 @@ public class DaoFactory {
                 rs.getString("email"));
     }
 
-    // 프록시 팩토리 빈 단점: 빈 오브젝트가 계속 새로 생겨남, 여러 클래스에 공통 부가기능 제공 불가, 한 클래스에 여러 부가기능 부여 시, 빈 생성 코드가 그 수만큼 늘고 중복적임.
-    // 스프링은 이 단점을 해소해주는 프록시 팩토리 빈을 제공한다. 스프링은 프록시 오브젝트를 생성해주는 기술을 추상화한 팩토리 빈을 제공한다.
-    @Bean
-    public TxProxyFactoryBean duplicatedUserService(){
-        TxProxyFactoryBean txProxyFactoryBean = new TxProxyFactoryBean();
-        txProxyFactoryBean.setPattern("upgradeLevels");
-        txProxyFactoryBean.setTransactionManager(transactionManager());
-        txProxyFactoryBean.setTarget(userServiceImpl());
-        txProxyFactoryBean.setServiceInterface(UserService.class);
-        return txProxyFactoryBean;
-    }
-
     @Bean
     public UserServicePolicy userServicePolicy(){ // 업그레이드 정책
         UserServicePolicyDefault userServicePolicy = new UserServicePolicyDefault();
@@ -92,7 +81,7 @@ public class DaoFactory {
     }
 
     @Bean
-    public UserServiceImpl userServiceImpl(){
+    public UserServiceImpl userService(){
         UserServiceImpl userServiceImpl = new UserServiceImpl();
         userServiceImpl.setUserDao(userDao());
         userServiceImpl.setUserServicePolicy(userServicePolicy());
@@ -115,25 +104,45 @@ public class DaoFactory {
         return transactionAdvice;
     }
 
-    // 트랜잭션을 적용할 포인트 컷
+    // 트랜잭션을 적용할 포인트 컷. 클래스 선정 알고리즘까지 포함하여 리팩토링 하였음.
     @Bean
     public NameMatchMethodPointcut transactionPointcut(){
-        NameMatchMethodPointcut pointcut = new NameMatchMethodPointcut();
+        NameMatchClassMethodPointcut pointcut = new NameMatchClassMethodPointcut();
+        pointcut.setMappedClassName("*ServiceImpl");
         pointcut.setMappedName("upgrade*");
         return pointcut;
     }
 
-    // 트랜잭션을 위한 어드바이저
+    // 트랜잭션을 위한 어드바이저. 자동 프록시 생성기를 사용함에 따라 이것을 명시적으로 DI 받는 빈은 이제 없다.
     @Bean
     public DefaultPointcutAdvisor transactionAdvisor(){
         return new DefaultPointcutAdvisor(transactionPointcut(), transactionAdvice());
     }
 
+    // 테스트 용. 포인트 컷에 맞추어 이름 수정.
     @Bean
-    public ProxyFactoryBean userService(){
-        ProxyFactoryBean pfBean = new ProxyFactoryBean();
-        pfBean.setTarget(userServiceImpl());
-        pfBean.setInterceptorNames("transactionAdvisor"); // 어드바이스 또는 어드바이저를 설정하는 메서드. 빈 아이디 값을 넣어준다.
-        return pfBean;
+    public UserServiceImpl testUserService(){
+        UserServiceImpl testUserService = new UserServiceImpl();
+        testUserService.setUserDao(userDao());
+        testUserService.setUserServicePolicy(testUserServicePolicy());
+        return testUserService;
     }
+
+    // 테스트 용.
+    @Bean
+    public UserServicePolicy testUserServicePolicy(){
+        TestUserServicePolicy testUserServicePolicy = new TestUserServicePolicy("4MR");
+        testUserServicePolicy.setUserDao(userDao());
+        testUserServicePolicy.setMailSender(mailSender());
+        return testUserServicePolicy;
+    }
+
+    // 어드바이저를 이용하는 자동 프록시 생성기.
+    // Advisor 인터페이스를 구현한 빈을 전부 찾은 뒤, 생성되는 모든 빈에 대해 어드바이저의 포인트 컷을 적용해보며 프록시 적용 대상을 선정한다.
+    // 프록시 적용 대상이라면 프록시를 만들어 해당 빈을 대체하도록 한다. 따라서 이런 타겟 빈에 의존하는 다른 빈들은 해당 프록시를 DI 받게된다.
+    @Bean
+    public DefaultAdvisorAutoProxyCreator defaultAdvisorAutoProxyCreator(){
+        return new DefaultAdvisorAutoProxyCreator();
+    }
+
 }

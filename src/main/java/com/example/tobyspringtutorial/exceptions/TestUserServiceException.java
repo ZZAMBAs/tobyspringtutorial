@@ -1,4 +1,4 @@
-package com.example.tobyspringtutorial.modules.exception;
+package com.example.tobyspringtutorial.exceptions;
 
 public class TestUserServiceException extends RuntimeException {
     public TestUserServiceException() {

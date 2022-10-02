@@ -1,17 +1,15 @@
 package com.example.tobyspringtutorial.modules.service;
 
+import com.example.tobyspringtutorial.exceptions.TestUserServiceException;
 import com.example.tobyspringtutorial.modules.DaoFactory;
-import com.example.tobyspringtutorial.modules.exception.TestUserServiceException;
 import com.example.tobyspringtutorial.modules.objects.Level;
 import com.example.tobyspringtutorial.modules.objects.User;
 import com.example.tobyspringtutorial.modules.repository.UserDao;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.aop.framework.ProxyFactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationContext;
 import org.springframework.mail.MailException;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
@@ -31,11 +29,9 @@ import static org.mockito.Mockito.*;
 @SpringBootTest(classes = DaoFactory.class)
 class UserServiceTest {
     @Autowired
-    private ApplicationContext ac;
-    @Autowired
     private UserService userService;
     @Autowired
-    private UserServiceImpl userServiceImpl;
+    private UserService testUserService;
     @Autowired
     private UserDao userDao;
     @Autowired
@@ -159,50 +155,21 @@ class UserServiceTest {
     }
 
     @Test
-    @DirtiesContext // 팩토리 빈을 직접 가져와서 팩토리 빈 내부 타겟을 테스트용으로 수정하므로 넣어주었다.
     public void upgradeAllOrNothing() {
         // given
-        ProxyFactoryBean txProxyFactoryBean = ac.getBean("&userService", ProxyFactoryBean.class);
-        String testId = users.get(3).getId();
-        UserServiceImpl testUserServiceImpl = new UserServiceForExceptionTest();
-        testUserServiceImpl.setUserDao(this.userDao); // 스프링 빈이 아니므로 수동 DI
-
-        UserServicePolicyForExceptionTest testUserServicePolicy = new UserServicePolicyForExceptionTest(testId);
-        testUserServicePolicy.setMailSender(this.mailSender);
-        testUserServicePolicy.setUserDao(this.userDao);
-        testUserServiceImpl.setUserServicePolicy(testUserServicePolicy);
-
-        txProxyFactoryBean.setTarget(testUserServiceImpl);
-        UserService txUserService = (UserService) txProxyFactoryBean.getObject();
 
         userDao.deleteAll();
         for (User user : users) userDao.add(user);
         // when
         try {
-            txUserService.upgradeLevels();
+            testUserService.upgradeLevels();
             fail("TestUserServiceException Expected");
             // Assertions.fail() 메서드에 코드가 도달하면 테스트 실패. 즉 이 코드에 오기전에 예외가 catch 되어야한다.
         }catch (TestUserServiceException e){}
         // then
         checkLevelUpgradeOccurred(users.get(1), false); // 롤백 되었는지 확인
-        // 트랜잭션 동기화로 이 테스트는 성공한다.
+        // 트랜잭션 동기화로 이 테스트는 성공한다. (현재 실패 중. 원인 분석 필요)
     }
-
-    @Test
-    public void mailSenderTest(){ // 콘솔 출력으로 테스트가 잘 되었는지 확인.
-        // given
-        User testUser = new User("12345", "조인스", "qwerty",
-                Level.BASIC, 1000, 999, "rksidksrksi@naver.com");
-        UserServicePolicyForExceptionTest testPolicy = new UserServicePolicyForExceptionTest("2");
-        testPolicy.setUserDao(this.userDao);
-        testPolicy.setMailSender(this.mailSender);
-        userDao.deleteAll();
-        userDao.add(testUser);
-        // when
-        testPolicy.upgradeLevel(testUser);
-        // then
-    }
-
 
     static class MockUserDao implements UserDao{
         private final List<User> users; // 레벨 업그레이드 후보 User 오브젝트 목록
@@ -258,26 +225,6 @@ class UserServiceTest {
         @Override
         public void send(SimpleMailMessage... simpleMessages) throws MailException {
 
-        }
-    }
-
-    // 아래 클래스들은 upgradeAllOrNothing 테스트를 위해서만 사용한다.
-    static class UserServiceForExceptionTest extends UserServiceImpl {
-        public UserServiceForExceptionTest() {
-        }
-    }
-
-    static class UserServicePolicyForExceptionTest extends UserServicePolicyDefault{
-        private final String id;
-
-        public UserServicePolicyForExceptionTest(String id) {
-            this.id = id;
-        }
-
-        @Override
-        public void upgradeLevel(User user) {
-            if (user.getId().equals(this.id)) throw new TestUserServiceException();
-            super.upgradeLevel(user);
         }
     }
 
