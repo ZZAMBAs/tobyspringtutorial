@@ -7,7 +7,6 @@ import com.example.tobyspringtutorial.modules.repository.UserDao;
 import java.util.List;
 
 // 서비스 패키지는 주로 비즈니스 로직이 오는 패키지이다.
-// 트랜잭션 관련 작업들은 UserServiceTx로 옮겼다.
 public class UserServiceImpl implements UserService{
     public static final int MIN_LOGCOUNT_FOR_SILVER = 50; // 상수 중복 방지.
     public static final int MIN_RECCOUNT_FOR_GOLD = 30;

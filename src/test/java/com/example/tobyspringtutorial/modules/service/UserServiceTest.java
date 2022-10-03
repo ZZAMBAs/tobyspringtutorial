@@ -14,7 +14,6 @@ import org.springframework.mail.MailException;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.transaction.PlatformTransactionManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,8 +33,6 @@ class UserServiceTest {
     private UserService testUserService;
     @Autowired
     private UserDao userDao;
-    @Autowired
-    private PlatformTransactionManager transactionManager;
     @Autowired
     private MailSender mailSender;
     List<User> users;
@@ -157,7 +154,6 @@ class UserServiceTest {
     @Test
     public void upgradeAllOrNothing() {
         // given
-
         userDao.deleteAll();
         for (User user : users) userDao.add(user);
         // when
@@ -168,7 +164,7 @@ class UserServiceTest {
         }catch (TestUserServiceException e){}
         // then
         checkLevelUpgradeOccurred(users.get(1), false); // 롤백 되었는지 확인
-        // 트랜잭션 동기화로 이 테스트는 성공한다. (현재 실패 중. 원인 분석 필요)
+        // 트랜잭션 동기화로 이 테스트는 성공한다.
     }
 
     static class MockUserDao implements UserDao{

@@ -12,6 +12,7 @@ import org.springframework.aop.support.DefaultPointcutAdvisor;
 import org.springframework.aop.support.NameMatchMethodPointcut;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
@@ -124,23 +125,18 @@ public class DaoFactory {
     public UserServiceImpl testUserService(){
         UserServiceImpl testUserService = new UserServiceImpl();
         testUserService.setUserDao(userDao());
-        testUserService.setUserServicePolicy(testUserServicePolicy());
-        return testUserService;
-    }
-
-    // 테스트 용.
-    @Bean
-    public UserServicePolicy testUserServicePolicy(){
         TestUserServicePolicy testUserServicePolicy = new TestUserServicePolicy("4MR");
         testUserServicePolicy.setUserDao(userDao());
         testUserServicePolicy.setMailSender(mailSender());
-        return testUserServicePolicy;
+        testUserService.setUserServicePolicy(testUserServicePolicy);
+        return testUserService;
     }
 
     // 어드바이저를 이용하는 자동 프록시 생성기.
     // Advisor 인터페이스를 구현한 빈을 전부 찾은 뒤, 생성되는 모든 빈에 대해 어드바이저의 포인트 컷을 적용해보며 프록시 적용 대상을 선정한다.
     // 프록시 적용 대상이라면 프록시를 만들어 해당 빈을 대체하도록 한다. 따라서 이런 타겟 빈에 의존하는 다른 빈들은 해당 프록시를 DI 받게된다.
     @Bean
+    @DependsOn("transactionAdvisor") // 이것이 왜 필요한가? XML 설정에는 이것이 없어도 됐었다.
     public DefaultAdvisorAutoProxyCreator defaultAdvisorAutoProxyCreator(){
         return new DefaultAdvisorAutoProxyCreator();
     }
