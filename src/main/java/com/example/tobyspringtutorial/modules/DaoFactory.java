@@ -136,7 +136,8 @@ public class DaoFactory {
     // Advisor 인터페이스를 구현한 빈을 전부 찾은 뒤, 생성되는 모든 빈에 대해 어드바이저의 포인트 컷을 적용해보며 프록시 적용 대상을 선정한다.
     // 프록시 적용 대상이라면 프록시를 만들어 해당 빈을 대체하도록 한다. 따라서 이런 타겟 빈에 의존하는 다른 빈들은 해당 프록시를 DI 받게된다.
     @Bean
-    @DependsOn("transactionAdvisor") // 이것이 왜 필요한가? XML 설정에는 이것이 없어도 됐었다.
+    @DependsOn("transactionAdvisor") // DependsOn 어노테이션으로 해당 빈에 의존함을 명시할 경우, 해당 빈을 현재 빈보다 먼저 생성한다.
+    // 어드바이저가 먼저 필요하므로 이렇게 설정한다.
     public DefaultAdvisorAutoProxyCreator defaultAdvisorAutoProxyCreator(){
         return new DefaultAdvisorAutoProxyCreator();
     }

@@ -1,5 +1,7 @@
 package com.example.tobyspringtutorial.learningTests;
 
+import com.example.tobyspringtutorial.forTest.forAop.Bean;
+import com.example.tobyspringtutorial.forTest.forAop.Target;
 import com.example.tobyspringtutorial.learningTests.forDynamicProxy.Hello;
 import com.example.tobyspringtutorial.learningTests.forDynamicProxy.HelloTarget;
 import com.example.tobyspringtutorial.learningTests.forDynamicProxy.HelloUppercase;
@@ -9,6 +11,7 @@ import org.aopalliance.intercept.MethodInvocation;
 import org.junit.jupiter.api.Test;
 import org.springframework.aop.ClassFilter;
 import org.springframework.aop.Pointcut;
+import org.springframework.aop.aspectj.AspectJExpressionPointcut;
 import org.springframework.aop.framework.ProxyFactoryBean;
 import org.springframework.aop.support.DefaultPointcutAdvisor;
 import org.springframework.aop.support.NameMatchMethodPointcut;
@@ -17,10 +20,12 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 // https://kdg-is.tistory.com/entry/JAVA-%EB%A6%AC%ED%94%8C%EB%A0%89%EC%85%98-Reflection%EC%9D%B4%EB%9E%80
 // 다이나믹 프록시를 설명하기 전에 리플렉션을 알아둬야 함. 그것이 전제기 때문.
-public class ProxyTest {
+public class AopTest {
 
     // Reflection 테스트
     @Test
@@ -157,4 +162,23 @@ public class ProxyTest {
         assertThat(proxiedHello.sayThankYou("Toby")).isEqualTo("Thank You, Toby");
     }
 
+    // 포인트컷 표현식 학습 테스트 (AspectJ 표현식)
+    @Test
+    public void methodSignaturePointcut() throws NoSuchMethodException {
+        // given
+        // System.out.println(Target.class.getMethod("minus", int.class, int.class));
+        AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut();
+        // when
+        pointcut.setExpression("execution(public int com.example.tobyspringtutorial.forTest.forAop.Target.minus(int,int))"); // Target 클래스 minus 메서드 시그니처
+        // execution() 파라미터로 전달받는 문자열이 비교 문자열이 된다. 리턴 값, 메서드 이름, 파라미터는 생략할 수 없지만
+        // 나머지는 생략이 가능하고, 생략할 수 없는 것들도 *(와일드카드)나 ..(파라미터 수 생략)로 줄일 수 있다.
+        // 단, 이 경우 상당히 느슨한 포인트컷이 됨에 주의. (즉, 예를 들어 execution(* *(..)) 면 모든 메서드 조건을 전부 허용함)
+        // then
+        assertTrue(pointcut.getClassFilter().matches(Target.class) && pointcut.getMethodMatcher().matches(
+                Target.class.getMethod("minus", int.class, int.class), null)); // 포인트컷 조건 통과
+        assertFalse(pointcut.getClassFilter().matches(Target.class) && pointcut.getMethodMatcher().matches(
+                Target.class.getMethod("plus", int.class, int.class), null)); // 메서드 매처에서 실패
+        assertFalse(pointcut.getClassFilter().matches(Bean.class) && pointcut.getMethodMatcher().matches(
+                Target.class.getMethod("method"), null));
+    }
 }
