@@ -173,6 +173,8 @@ public class AopTest {
         // execution() 파라미터로 전달받는 문자열이 비교 문자열이 된다. 리턴 값, 메서드 이름, 파라미터는 생략할 수 없지만
         // 나머지는 생략이 가능하고, 생략할 수 없는 것들도 *(와일드카드)나 ..(파라미터 수 생략)로 줄일 수 있다.
         // 단, 이 경우 상당히 느슨한 포인트컷이 됨에 주의. (즉, 예를 들어 execution(* *(..)) 면 모든 메서드 조건을 전부 허용함)
+        // execution은 메서드 시그니처를 비교하는 방식. 그 외에 bean()을 쓰면 빈의 이름으로 비교하는 방식을 사용한다.
+        // 문자열을 입력받는 형식이기에 이것은 컴파일 시점에 검사가 안된다. 꽤나 큰 단점. 문법을 정확히 알고 사용하도록 하자.
         // then
         assertTrue(pointcut.getClassFilter().matches(Target.class) && pointcut.getMethodMatcher().matches(
                 Target.class.getMethod("minus", int.class, int.class), null)); // 포인트컷 조건 통과

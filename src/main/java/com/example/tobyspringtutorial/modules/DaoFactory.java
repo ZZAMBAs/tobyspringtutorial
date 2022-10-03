@@ -7,9 +7,9 @@ import com.example.tobyspringtutorial.modules.objects.User;
 import com.example.tobyspringtutorial.modules.repository.UserDao;
 import com.example.tobyspringtutorial.modules.repository.UserDaoJdbc;
 import com.example.tobyspringtutorial.modules.service.*;
+import org.springframework.aop.aspectj.AspectJExpressionPointcut;
 import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
 import org.springframework.aop.support.DefaultPointcutAdvisor;
-import org.springframework.aop.support.NameMatchMethodPointcut;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
@@ -105,12 +105,11 @@ public class DaoFactory {
         return transactionAdvice;
     }
 
-    // 트랜잭션을 적용할 포인트 컷. 클래스 선정 알고리즘까지 포함하여 리팩토링 하였음.
+    // 트랜잭션을 적용할 포인트 컷. 포인트컷 표현식(AspectJ 표현식)을 이용하도록 리팩토링.
     @Bean
-    public NameMatchMethodPointcut transactionPointcut(){
-        NameMatchClassMethodPointcut pointcut = new NameMatchClassMethodPointcut();
-        pointcut.setMappedClassName("*ServiceImpl");
-        pointcut.setMappedName("upgrade*");
+    public AspectJExpressionPointcut transactionPointcut(){
+        AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut();
+        pointcut.setExpression("execution(* *..*ServiceImpl.upgrade*(..))");
         return pointcut;
     }
 
