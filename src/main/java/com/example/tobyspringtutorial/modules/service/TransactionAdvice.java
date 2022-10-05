@@ -18,6 +18,8 @@ public class TransactionAdvice implements MethodInterceptor {
     public Object invoke(MethodInvocation invocation) throws Throwable { // 타겟을 호출하는 기능을 가진 콜백 오브젝트(invocation)를 프록시로부터 받는다.
         // 덕분에 어드바이스는 특정 타겟에 의존하지 않고 재사용이 가능하다.
         TransactionStatus status = transactionManager.getTransaction(new DefaultTransactionDefinition());
+        // DefaultTransactionDefinition 내의 트랜잭션 속성들에 대해: https://frtt0608.tistory.com/140
+        // 기본적으로 PROPAGATION_REQUIRED, ISOLATION_DEFAULT, timeout = 0(제한 없음) 이다.
         try {
             Object ret = invocation.proceed(); // 콜백을 호출해서 타겟의 메서드를 실행한다.
             // 타겟 메서드 호출 전후로 필요한 부가기능을 넣을 수 있다. 경우에 따라 타겟이 아예 호출되지 않게 하거나
