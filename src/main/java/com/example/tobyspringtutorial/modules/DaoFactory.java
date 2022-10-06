@@ -6,7 +6,10 @@ import com.example.tobyspringtutorial.modules.objects.Level;
 import com.example.tobyspringtutorial.modules.objects.User;
 import com.example.tobyspringtutorial.modules.repository.UserDao;
 import com.example.tobyspringtutorial.modules.repository.UserDaoJdbc;
-import com.example.tobyspringtutorial.modules.service.*;
+import com.example.tobyspringtutorial.modules.service.DummyMailSender;
+import com.example.tobyspringtutorial.modules.service.UserServiceImpl;
+import com.example.tobyspringtutorial.modules.service.UserServicePolicy;
+import com.example.tobyspringtutorial.modules.service.UserServicePolicyDefault;
 import org.springframework.aop.aspectj.AspectJExpressionPointcut;
 import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
 import org.springframework.aop.support.DefaultPointcutAdvisor;
@@ -18,8 +21,10 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 import org.springframework.mail.MailSender;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.interceptor.TransactionInterceptor;
 
 import javax.sql.DataSource;
+import java.util.Properties;
 
 @Configuration
 public class DaoFactory {
@@ -97,15 +102,24 @@ public class DaoFactory {
         return messageFactoryBean;
     }
 
-    // 트랜잭션을 위한 어드바이스를 빈으로 등록
+    // 트랜잭션을 위한 어드바이스를 빈으로 등록. 스프링이 지원하는 TransactionInterceptor를 사용한 것으로 리팩토링.
     @Bean
-    public TransactionAdvice transactionAdvice(){
-        TransactionAdvice transactionAdvice = new TransactionAdvice();
+    public TransactionInterceptor transactionAdvice(){
+        TransactionInterceptor transactionAdvice = new TransactionInterceptor();
         transactionAdvice.setTransactionManager(transactionManager());
+        Properties transactionAttributes = new Properties();
+        transactionAttributes.setProperty("get*", "PROPAGATION_REQUIRED, readOnly, timeout_30");
+        transactionAttributes.setProperty("upgrade*", "PROPAGATION_REQUIRES_NEW, ISOLATION_SERIALIZABLE");
+        transactionAttributes.setProperty("*", "PROPAGATION_REQUIRED");
+        // 트랜잭션 격리 수준: https://velog.io/@guswns3371/%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B2%A0%EC%9D%B4%EC%8A%A4-%ED%8A%B8%EB%9E%9C%EC%9E%AD%EC%85%98-%EA%B2%A9%EB%A6%AC%EC%88%98%EC%A4%80
+        // https://zangzangs.tistory.com/167 https://code-lab1.tistory.com/52
+        // 메서드 이름이 하나 이상의 패턴과 일치하는 경우, 매서드 패턴의 일치가 더 자세한 것을 따른다.
+        transactionAdvice.setTransactionAttributes(transactionAttributes);
         return transactionAdvice;
     }
 
     // 트랜잭션을 적용할 포인트 컷. 포인트컷 표현식(AspectJ 표현식)을 이용하도록 리팩토링.
+    // 포인트컷 표현식은 타입 패턴이나 빈 이름을 이용한다.
     @Bean
     public AspectJExpressionPointcut transactionPointcut(){
         AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut();
