@@ -1,6 +1,7 @@
 package com.example.tobyspringtutorial.modules;
 
 import com.example.tobyspringtutorial.forTest.forFactoryBean.MessageFactoryBean;
+import com.example.tobyspringtutorial.forTest.service.TestUserService;
 import com.example.tobyspringtutorial.forTest.service.TestUserServicePolicy;
 import com.example.tobyspringtutorial.modules.objects.Level;
 import com.example.tobyspringtutorial.modules.objects.User;
@@ -103,6 +104,7 @@ public class DaoFactory {
     }
 
     // 트랜잭션을 위한 어드바이스를 빈으로 등록. 스프링이 지원하는 TransactionInterceptor를 사용한 것으로 리팩토링.
+    // 이것에 대한 학습 테스트를 TransactionTest에서 확인.
     @Bean
     public TransactionInterceptor transactionAdvice(){
         TransactionInterceptor transactionAdvice = new TransactionInterceptor();
@@ -138,7 +140,7 @@ public class DaoFactory {
     // 테스트 용. 포인트 컷에 맞추어 이름 수정.
     @Bean
     public UserServiceImpl testUserService(){
-        UserServiceImpl testUserService = new UserServiceImpl();
+        TestUserService testUserService = new TestUserService();
         testUserService.setUserDao(userDao());
         TestUserServicePolicy testUserServicePolicy = new TestUserServicePolicy("4MR");
         testUserServicePolicy.setUserDao(userDao());
