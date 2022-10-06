@@ -36,4 +36,25 @@ public class UserServiceImpl implements UserService{
             user.setLevel(Level.BASIC);
         userDao.add(user);
     }
+
+    // 특별히 부가할 기능이 없으니 위임한다.
+    @Override
+    public User get(String id) {
+        return userDao.get(id);
+    }
+
+    @Override
+    public List<User> getAll() {
+        return userDao.getAll();
+    }
+
+    @Override
+    public void deleteAll() {
+        userDao.deleteAll();
+    }
+
+    @Override
+    public void update(User user) {
+        userDao.update(user);
+    }
 }

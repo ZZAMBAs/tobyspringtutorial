@@ -118,12 +118,14 @@ public class DaoFactory {
         return transactionAdvice;
     }
 
-    // 트랜잭션을 적용할 포인트 컷. 포인트컷 표현식(AspectJ 표현식)을 이용하도록 리팩토링.
-    // 포인트컷 표현식은 타입 패턴이나 빈 이름을 이용한다.
+    // 트랜잭션을 적용할 포인트 컷. 모든 메서드에 적용되도록 빈 이름으로 리팩토링.
+    // 사실 트랜잭션은 적용되는 클래스 내에서 전부 적용하도록 일반화하는 것이 혼란이 적다.
+    // 일반화하기 적당하지 않다면 별도의 어드바이스와 포인트컷을 적용하자.
+    // 포인트컷 표현식은 타입 패턴(execution)이나 빈 이름(아이디)(bean)을 이용한다.
     @Bean
     public AspectJExpressionPointcut transactionPointcut(){
         AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut();
-        pointcut.setExpression("execution(* *..*ServiceImpl.upgrade*(..))");
+        pointcut.setExpression("bean(*Service)");
         return pointcut;
     }
 
