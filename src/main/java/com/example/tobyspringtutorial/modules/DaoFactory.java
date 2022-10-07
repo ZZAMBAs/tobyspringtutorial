@@ -123,23 +123,6 @@ public class DaoFactory {
         return transactionAdvice;
     }
 
-    // 트랜잭션을 적용할 포인트 컷. 모든 메서드에 적용되도록 빈 이름으로 리팩토링.
-    // 사실 트랜잭션은 적용되는 클래스 내에서 전부 적용하도록 일반화하는 것이 혼란이 적다.
-    // 일반화하기 적당하지 않다면 별도의 어드바이스와 포인트컷을 적용하자.
-    // 포인트컷 표현식은 타입 패턴(execution)이나 빈 이름(아이디)(bean)을 이용한다.
-    @Bean
-    public AspectJExpressionPointcut transactionPointcut(){
-        AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut();
-        pointcut.setExpression("bean(*Service)");
-        return pointcut;
-    }
-
-    // 트랜잭션을 위한 어드바이저. 자동 프록시 생성기를 사용함에 따라 이것을 명시적으로 DI 받는 빈은 이제 없다.
-    @Bean
-    public DefaultPointcutAdvisor transactionAdvisor(){
-        return new DefaultPointcutAdvisor(transactionPointcut(), transactionAdvice());
-    }
-
     // 테스트 용. 포인트 컷에 맞추어 이름 수정.
     @Bean
     public UserServiceImpl testUserService(){
@@ -151,10 +134,7 @@ public class DaoFactory {
         testUserService.setUserServicePolicy(testUserServicePolicy);
         return testUserService;
     }
-
-    // 어드바이저를 이용하는 자동 프록시 생성기.
-    // Advisor 인터페이스를 구현한 빈을 전부 찾은 뒤, 생성되는 모든 빈에 대해 어드바이저의 포인트 컷을 적용해보며 프록시 적용 대상을 선정한다.
-    // 프록시 적용 대상이라면 프록시를 만들어 해당 빈을 대체하도록 한다. 따라서 이런 타겟 빈에 의존하는 다른 빈들은 해당 프록시를 DI 받게된다.
+    /*
     @Bean
     @DependsOn("transactionAdvisor") // DependsOn 어노테이션으로 해당 빈에 의존함을 명시할 경우, 해당 빈을 현재 빈보다 먼저 생성한다.
     // 어드바이저가 먼저 필요하므로 이렇게 설정한다.
@@ -162,4 +142,16 @@ public class DaoFactory {
         return new DefaultAdvisorAutoProxyCreator();
     }
 
+    @Bean
+    public AspectJExpressionPointcut transactionPointcut(){
+        AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut();
+        pointcut.setExpression("bean(*Service)");
+        return pointcut;
+    }
+
+    @Bean
+    public DefaultPointcutAdvisor transactionAdvisor(){
+        return new DefaultPointcutAdvisor(transactionPointcut(), transactionAdvice());
+    }
+*/ // @Transactional을 씀에 따라 사용하지 않는다.
 }
