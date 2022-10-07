@@ -22,12 +22,15 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 import org.springframework.mail.MailSender;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.interceptor.TransactionInterceptor;
 
 import javax.sql.DataSource;
 import java.util.Properties;
 
 @Configuration
+@EnableTransactionManagement //@Transactional가 붙은 것을 추적하는 포인트컷과 해당 애노테이션 내 트랜잭션 속성을 이용하는 어드바이스를 이용한 어드바이저를 적용한다.
+// https://box0830.tistory.com/230
 public class DaoFactory {
     @Bean
     public UserDao userDao(){
