@@ -52,14 +52,15 @@ public class TransactionTest {
         // 트랜잭션을 미리 생성한다.
         // 트랜잭션의 PROPAGATION 속성 외 속성들은 최초 실행 시 트랜잭션 속성 값에 고정되고 끝날 때까지 변하지 않는다.
         DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
-        txDef.setReadOnly(true);
         TransactionStatus status = transactionManager.getTransaction(txDef);
 
         // 현재 아래 트랜잭션의 속성 값들은 PROPAGATION_REQUIRED 이므로, 이미 만들어진 트랜잭션에 합류한다.
-        testUserService.deleteAll(); // readOnly 속성으로 인해 예외가 발생한다.
         testUserService.add(users.get(0));
         testUserService.add(users.get(1));
+        assertThat(userDao.getCount()).isEqualTo(2);
 
-        transactionManager.commit(status);
+        transactionManager.rollback(status); // 모든 트랜잭션이 한꺼번에 롤백된다.
+
+        assertThat(userDao.getCount()).isEqualTo(0);
     }
 }
