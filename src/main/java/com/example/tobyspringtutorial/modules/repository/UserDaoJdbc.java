@@ -7,11 +7,17 @@ import org.springframework.jdbc.core.RowMapper;
 
 import javax.sql.DataSource;
 import java.util.List;
+import java.util.Map;
 
 public class UserDaoJdbc implements UserDao{
     private RowMapper<User> userRowMapper;
     private JdbcTemplate jdbcTemplate; // 스프링서 직접 지원하는 JDBC 코드용 기본 템플릿. 직접 만든 jdbcContext와 역할이 동일.
     // https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/JdbcTemplate.html
+    private Map<String, String> sqlMap;
+
+    public void setSqlMap(Map<String, String> sqlMap) {
+        this.sqlMap = sqlMap;
+    }
 
     public void setDataSource(DataSource dataSource){
         jdbcTemplate = new JdbcTemplate(dataSource);
@@ -22,30 +28,30 @@ public class UserDaoJdbc implements UserDao{
     }
 
     public void add(User user) throws DuplicateKeyException { // JdbcTemplate는 중복 키 삽입에 대한 예외를 만들어 놓았다.
-        this.jdbcTemplate.update("insert into users values (?, ?, ?, ?, ?, ?, ?)",
+        this.jdbcTemplate.update(sqlMap.get("add"),
                 user.getId(), user.getUserName(), user.getPassword(),
                 user.getLevel().intValue(), user.getLogin(), user.getRecommend(), user.getEmail());
         // 바로 쿼리에 바인딩할 값을 넣어줄 수 있다.
     }
 
     public User get(String id) {
-        return jdbcTemplate.queryForObject("select * from users where id = ?", userRowMapper, id); // RowMapper는 ResultSet 인자와 인스턴스 사이 바인딩을 위한 콜백. 마지막 파라미터 id는 sql의 ? 바인딩을 위함.
+        return jdbcTemplate.queryForObject(sqlMap.get("get"), userRowMapper, id); // RowMapper는 ResultSet 인자와 인스턴스 사이 바인딩을 위한 콜백. 마지막 파라미터 id는 sql의 ? 바인딩을 위함.
         // queryForObject는 SQL 실행시 하나의 row 값만 얻기를 기대하여 ResultSet의 next()를 바로 실행한 뒤 RowMapper 콜백을 호출한다.
         // queryForObject는 ResultSet에 결과행이 1개일 때 쓰는것이 좋다.
     }
 
     public List<User> getAll(){
-        return jdbcTemplate.query("select * from users order by id", userRowMapper);
+        return jdbcTemplate.query(sqlMap.get("getAll"), userRowMapper);
         // query()는 T, List<T>, void 등으로 반환타입이 다양하다. 콜백에 따라 이는 결정된다.
     }
 
     public void deleteAll(){
-        jdbcTemplate.update("delete from users");
+        jdbcTemplate.update(sqlMap.get("deleteAll"));
     }
 
 
     public int getCount() {
-        return this.jdbcTemplate.query(con -> con.prepareStatement("select count(*) from users"),
+        return this.jdbcTemplate.query(con -> con.prepareStatement(sqlMap.get("getCount")),
                 rs -> {
                     rs.next();
                     return rs.getInt(1);
@@ -57,8 +63,7 @@ public class UserDaoJdbc implements UserDao{
 
     @Override
     public void update(User user) {
-        this.jdbcTemplate.update("update users set username = ?, password = ?, level = ?, login = ?, " +
-                "recommend = ?, email = ? where id = ?", user.getUserName(), user.getPassword(), user.getLevel().intValue(),
+        this.jdbcTemplate.update(sqlMap.get("update"), user.getUserName(), user.getPassword(), user.getLevel().intValue(),
                 user.getLogin(), user.getRecommend(), user.getEmail(), user.getId());
     }
 }

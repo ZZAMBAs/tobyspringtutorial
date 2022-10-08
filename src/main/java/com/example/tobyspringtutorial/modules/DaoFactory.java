@@ -26,6 +26,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.interceptor.TransactionInterceptor;
 
 import javax.sql.DataSource;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 @Configuration
@@ -34,9 +36,18 @@ import java.util.Properties;
 public class DaoFactory {
     @Bean
     public UserDao userDao(){
+        Map<String, String> sqlMap = new HashMap<>();
+        sqlMap.put("add", "insert into users values(?, ?, ?, ?, ?, ?, ?)");
+        sqlMap.put("get", "select * from users where id = ?");
+        sqlMap.put("getAll", "select * from users order by id");
+        sqlMap.put("deleteAll", "delete from users");
+        sqlMap.put("getCount", "select count(*) from users");
+        sqlMap.put("update", "update users set username = ?, password = ?, level = ?, login = ?, recommend = ?, email = ? where id = ?");
+
         UserDaoJdbc userDaoJdbc = new UserDaoJdbc();
         userDaoJdbc.setDataSource(dataSource());
         userDaoJdbc.setUserRowMapper(userRowMapper());
+        userDaoJdbc.setSqlMap(sqlMap);
         return userDaoJdbc;
     }
 
