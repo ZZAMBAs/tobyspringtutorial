@@ -7,10 +7,7 @@ import com.example.tobyspringtutorial.modules.objects.Level;
 import com.example.tobyspringtutorial.modules.objects.User;
 import com.example.tobyspringtutorial.modules.repository.UserDao;
 import com.example.tobyspringtutorial.modules.repository.UserDaoJdbc;
-import com.example.tobyspringtutorial.modules.service.DummyMailSender;
-import com.example.tobyspringtutorial.modules.service.UserServiceImpl;
-import com.example.tobyspringtutorial.modules.service.UserServicePolicy;
-import com.example.tobyspringtutorial.modules.service.UserServicePolicyDefault;
+import com.example.tobyspringtutorial.modules.service.*;
 import org.springframework.aop.aspectj.AspectJExpressionPointcut;
 import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
 import org.springframework.aop.support.DefaultPointcutAdvisor;
@@ -36,19 +33,27 @@ import java.util.Properties;
 public class DaoFactory {
     @Bean
     public UserDao userDao(){
-        Map<String, String> sqlMap = new HashMap<>();
-        sqlMap.put("add", "insert into users values(?, ?, ?, ?, ?, ?, ?)");
-        sqlMap.put("get", "select * from users where id = ?");
-        sqlMap.put("getAll", "select * from users order by id");
-        sqlMap.put("deleteAll", "delete from users");
-        sqlMap.put("getCount", "select count(*) from users");
-        sqlMap.put("update", "update users set username = ?, password = ?, level = ?, login = ?, recommend = ?, email = ? where id = ?");
-
         UserDaoJdbc userDaoJdbc = new UserDaoJdbc();
         userDaoJdbc.setDataSource(dataSource());
         userDaoJdbc.setUserRowMapper(userRowMapper());
-        userDaoJdbc.setSqlMap(sqlMap);
+        userDaoJdbc.setSqlService(sqlService());
         return userDaoJdbc;
+    }
+
+    @Bean
+    public SqlService sqlService(){
+        SimpleSqlService sqlService = new SimpleSqlService();
+
+        Map<String, String> sqlMap = new HashMap<>();
+        sqlMap.put("userAdd", "insert into users values(?, ?, ?, ?, ?, ?, ?)");
+        sqlMap.put("userGet", "select * from users where id = ?");
+        sqlMap.put("userGetAll", "select * from users order by id");
+        sqlMap.put("userDeleteAll", "delete from users");
+        sqlMap.put("userGetCount", "select count(*) from users");
+        sqlMap.put("userUpdate", "update users set username = ?, password = ?, level = ?, login = ?, recommend = ?, email = ? where id = ?");
+
+        sqlService.setSqlMap(sqlMap);
+        return sqlService;
     }
 
     @Bean
