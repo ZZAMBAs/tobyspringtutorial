@@ -8,12 +8,8 @@ import com.example.tobyspringtutorial.modules.objects.User;
 import com.example.tobyspringtutorial.modules.repository.UserDao;
 import com.example.tobyspringtutorial.modules.repository.UserDaoJdbc;
 import com.example.tobyspringtutorial.modules.service.*;
-import org.springframework.aop.aspectj.AspectJExpressionPointcut;
-import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
-import org.springframework.aop.support.DefaultPointcutAdvisor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
@@ -23,8 +19,6 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.interceptor.TransactionInterceptor;
 
 import javax.sql.DataSource;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 
 @Configuration
@@ -42,17 +36,7 @@ public class DaoFactory {
 
     @Bean
     public SqlService sqlService(){
-        SimpleSqlService sqlService = new SimpleSqlService();
-
-        Map<String, String> sqlMap = new HashMap<>();
-        sqlMap.put("userAdd", "insert into users values(?, ?, ?, ?, ?, ?, ?)");
-        sqlMap.put("userGet", "select * from users where id = ?");
-        sqlMap.put("userGetAll", "select * from users order by id");
-        sqlMap.put("userDeleteAll", "delete from users");
-        sqlMap.put("userGetCount", "select count(*) from users");
-        sqlMap.put("userUpdate", "update users set username = ?, password = ?, level = ?, login = ?, recommend = ?, email = ? where id = ?");
-
-        sqlService.setSqlMap(sqlMap);
+        DefaultSqlService sqlService = new DefaultSqlService(); // 디폴트 의존관계 빈을 사용.
         return sqlService;
     }
 
@@ -150,24 +134,4 @@ public class DaoFactory {
         testUserService.setUserServicePolicy(testUserServicePolicy);
         return testUserService;
     }
-    /*
-    @Bean
-    @DependsOn("transactionAdvisor") // DependsOn 어노테이션으로 해당 빈에 의존함을 명시할 경우, 해당 빈을 현재 빈보다 먼저 생성한다.
-    // 어드바이저가 먼저 필요하므로 이렇게 설정한다.
-    public DefaultAdvisorAutoProxyCreator defaultAdvisorAutoProxyCreator(){
-        return new DefaultAdvisorAutoProxyCreator();
-    }
-
-    @Bean
-    public AspectJExpressionPointcut transactionPointcut(){
-        AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut();
-        pointcut.setExpression("bean(*Service)");
-        return pointcut;
-    }
-
-    @Bean
-    public DefaultPointcutAdvisor transactionAdvisor(){
-        return new DefaultPointcutAdvisor(transactionPointcut(), transactionAdvice());
-    }
-*/ // @Transactional을 씀에 따라 사용하지 않는다.
 }

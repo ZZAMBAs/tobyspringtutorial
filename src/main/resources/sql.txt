@@ -1,0 +1,6 @@
+userAdd	insert into users values(?, ?, ?, ?, ?, ?, ?)
+userGet	select * from users where id = ?
+userGetAll	select * from users order by id
+userDeleteAll	delete from users
+userGetCount	select count(*) from users
+userUpdate	update users set username = ?, password = ?, level = ?, login = ?, recommend = ?, email = ? where id = ?
