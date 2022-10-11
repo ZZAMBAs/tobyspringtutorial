@@ -5,16 +5,16 @@ import com.example.tobyspringtutorial.forTest.service.TestUserService;
 import com.example.tobyspringtutorial.forTest.service.TestUserServicePolicy;
 import com.example.tobyspringtutorial.modules.objects.Level;
 import com.example.tobyspringtutorial.modules.objects.User;
-import com.example.tobyspringtutorial.modules.repository.ConcurrentHashMapSqlRegistry;
-import com.example.tobyspringtutorial.modules.repository.SqlRegistry;
-import com.example.tobyspringtutorial.modules.repository.UserDao;
-import com.example.tobyspringtutorial.modules.repository.UserDaoJdbc;
+import com.example.tobyspringtutorial.modules.repository.*;
 import com.example.tobyspringtutorial.modules.service.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.mail.MailSender;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -60,6 +60,11 @@ public class DaoFactory {
 
         return dataSource;
     }
+
+    /*@Bean
+    public EmbeddedDatabaseFactoryBean embeddedDatabase(){
+        return new EmbeddedDatabaseFactoryBean();
+    }*/ // 학습 테스트를 위해 비활성화.
 
     @Bean
     public RowMapper<User> userRowMapper(){

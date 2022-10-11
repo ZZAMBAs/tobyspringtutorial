@@ -32,7 +32,7 @@ dependencies {
 	// https://mvnrepository.com/artifact/com.sun.mail/javax.mail
 	implementation 'com.sun.mail:javax.mail:1.6.2'
 	implementation 'org.springframework.boot:spring-boot-starter-mail:'
-
+	testImplementation 'com.h2database:h2:2.1.214'
 }
 
 tasks.named('test') {
