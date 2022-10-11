@@ -5,6 +5,8 @@ import com.example.tobyspringtutorial.forTest.service.TestUserService;
 import com.example.tobyspringtutorial.forTest.service.TestUserServicePolicy;
 import com.example.tobyspringtutorial.modules.objects.Level;
 import com.example.tobyspringtutorial.modules.objects.User;
+import com.example.tobyspringtutorial.modules.repository.ConcurrentHashMapSqlRegistry;
+import com.example.tobyspringtutorial.modules.repository.SqlRegistry;
 import com.example.tobyspringtutorial.modules.repository.UserDao;
 import com.example.tobyspringtutorial.modules.repository.UserDaoJdbc;
 import com.example.tobyspringtutorial.modules.service.*;
@@ -37,7 +39,13 @@ public class DaoFactory {
     @Bean
     public SqlService sqlService(){
         DefaultSqlService sqlService = new DefaultSqlService(); // 디폴트 의존관계 빈을 사용.
+        sqlService.setSqlRegistry(sqlRegistry());
         return sqlService;
+    }
+
+    @Bean
+    public SqlRegistry sqlRegistry(){
+        return new ConcurrentHashMapSqlRegistry();
     }
 
     @Bean
