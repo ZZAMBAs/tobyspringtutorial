@@ -2,6 +2,7 @@ package com.example.tobyspringtutorial.modules.repository;
 
 import com.example.tobyspringtutorial.modules.objects.User;
 import com.example.tobyspringtutorial.modules.service.SqlService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -19,6 +20,7 @@ public class UserDaoJdbc implements UserDao{
         this.sqlService = sqlService;
     }
 
+    @Autowired // 자동와이어링. 빈 설정에서 set을 안 써주면 빈에서 찾아 주입. 우선순위는 타입 -> 이름 순.
     public void setDataSource(DataSource dataSource){
         jdbcTemplate = new JdbcTemplate(dataSource);
     }

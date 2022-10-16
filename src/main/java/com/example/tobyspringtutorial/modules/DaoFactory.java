@@ -5,14 +5,17 @@ import com.example.tobyspringtutorial.forTest.service.TestUserService;
 import com.example.tobyspringtutorial.forTest.service.TestUserServicePolicy;
 import com.example.tobyspringtutorial.modules.objects.Level;
 import com.example.tobyspringtutorial.modules.objects.User;
-import com.example.tobyspringtutorial.modules.repository.*;
+import com.example.tobyspringtutorial.modules.repository.EmbeddedDbSqlRegistry;
+import com.example.tobyspringtutorial.modules.repository.SqlRegistry;
+import com.example.tobyspringtutorial.modules.repository.UserDao;
+import com.example.tobyspringtutorial.modules.repository.UserDaoJdbc;
 import com.example.tobyspringtutorial.modules.service.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.mail.MailSender;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -21,6 +24,8 @@ import org.springframework.transaction.interceptor.TransactionInterceptor;
 import javax.sql.DataSource;
 import java.util.Properties;
 
+import static org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType.H2;
+
 @Configuration
 @EnableTransactionManagement //@Transactional가 붙은 것을 추적하는 포인트컷과 해당 애노테이션 내 트랜잭션 속성을 이용하는 어드바이스를 이용한 어드바이저를 적용한다.
 // https://box0830.tistory.com/230
@@ -28,8 +33,9 @@ public class DaoFactory {
     @Bean
     public UserDao userDao(){
         UserDaoJdbc userDaoJdbc = new UserDaoJdbc();
-        userDaoJdbc.setDataSource(dataSource());
-        userDaoJdbc.setUserRowMapper(userRowMapper());
+        //userDaoJdbc.setDataSource(dataSource()); // 자동와이어링으로 주입 됨.
+        //userDaoJdbc.setDataSource(embeddedDatabase()); // 현재 트랜잭션이 적용되지 않는 에러 존재.
+        userDaoJdbc.setUserRowMapper(userRowMapper()); // 이것들처럼 나머지 setter로 된 빈 주입 DI들도 자동와이어링화 할 수 있다.
         userDaoJdbc.setSqlService(sqlService());
         return userDaoJdbc;
     }
@@ -37,16 +43,16 @@ public class DaoFactory {
     @Bean
     public SqlService sqlService(){
         DefaultSqlService sqlService = new DefaultSqlService(); // 디폴트 의존관계 빈을 사용.
-        //sqlService.setSqlRegistry(sqlRegistry());
+        sqlService.setSqlRegistry(sqlRegistry());
         return sqlService;
     }
 
-    /*@Bean
+    @Bean
     public SqlRegistry sqlRegistry(){
         EmbeddedDbSqlRegistry sqlRegistry = new EmbeddedDbSqlRegistry();
-        sqlRegistry.setDataSource(dataSource());
+        sqlRegistry.setDataSource(embeddedDatabase());
         return sqlRegistry;
-    }*/
+    }
 
     @Bean
     public DataSource dataSource(){
@@ -66,12 +72,13 @@ public class DaoFactory {
         EmbeddedDatabaseFactoryBean embeddedDatabaseFactoryBean = new EmbeddedDatabaseFactoryBean();
         embeddedDatabaseFactoryBean.setInitSqlResourcePath("classpath:schema.sql", "classpath:initSqlSchema.sql");
         return embeddedDatabaseFactoryBean;
-    } // 통합 테스트 에러 확인 필
+    }*/
 
     @Bean
-    public EmbeddedDatabase dataSource(){
-        return embeddedDatabaseFactoryBean().getObject();
-    }*/
+    public DataSource embeddedDatabase(){
+        return new EmbeddedDatabaseBuilder().setName("embeddedDatabase")
+            .setType(H2).addScript("classpath:initSqlSchema.sql").addScript("classpath:schema.sql").build();
+    }
 
     @Bean
     public RowMapper<User> userRowMapper(){
@@ -96,7 +103,7 @@ public class DaoFactory {
     @Bean // 다른 곳에서도 사용 가능성이 높고 싱글톤 사용이 가능하여 빈으로 등록
     public PlatformTransactionManager transactionManager(){
         // Javadoc: https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/PlatformTransactionManager.html
-        return new DataSourceTransactionManager(this.dataSource()); // 기본 JDBC를 이용할 경우
+        return new DataSourceTransactionManager(dataSource()); // 기본 JDBC를 이용할 경우
         // return new JtaTransactionManager(); // JTA를 이용할 경우
         // return new JpaTransactionManager(); // JPA를 이용할 경우
         // return new HibernateTransactionManager(); // Hibernate를 이용할 경우
@@ -111,7 +118,7 @@ public class DaoFactory {
     }
 
     @Bean
-    public UserServiceImpl userService(){
+    public UserService userService(){
         UserServiceImpl userServiceImpl = new UserServiceImpl();
         userServiceImpl.setUserDao(userDao());
         userServiceImpl.setUserServicePolicy(userServicePolicy());
@@ -145,7 +152,7 @@ public class DaoFactory {
 
     // 테스트 용. 포인트 컷에 맞추어 이름 수정.
     @Bean
-    public UserServiceImpl testUserService(){
+    public UserService testUserService(){
         TestUserService testUserService = new TestUserService();
         testUserService.setUserDao(userDao());
         TestUserServicePolicy testUserServicePolicy = new TestUserServicePolicy("4MR");
