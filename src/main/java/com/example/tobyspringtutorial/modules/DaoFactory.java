@@ -13,8 +13,6 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.mail.MailSender;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -39,14 +37,16 @@ public class DaoFactory {
     @Bean
     public SqlService sqlService(){
         DefaultSqlService sqlService = new DefaultSqlService(); // 디폴트 의존관계 빈을 사용.
-        sqlService.setSqlRegistry(sqlRegistry());
+        //sqlService.setSqlRegistry(sqlRegistry());
         return sqlService;
     }
 
-    @Bean
+    /*@Bean
     public SqlRegistry sqlRegistry(){
-        return new ConcurrentHashMapSqlRegistry();
-    }
+        EmbeddedDbSqlRegistry sqlRegistry = new EmbeddedDbSqlRegistry();
+        sqlRegistry.setDataSource(dataSource());
+        return sqlRegistry;
+    }*/
 
     @Bean
     public DataSource dataSource(){
@@ -61,10 +61,17 @@ public class DaoFactory {
         return dataSource;
     }
 
-    /*@Bean
-    public EmbeddedDatabaseFactoryBean embeddedDatabase(){
-        return new EmbeddedDatabaseFactoryBean();
-    }*/ // 학습 테스트를 위해 비활성화.
+    /*@Bean(destroyMethod = "shutdown")
+    public EmbeddedDatabaseFactoryBean embeddedDatabaseFactoryBean(){
+        EmbeddedDatabaseFactoryBean embeddedDatabaseFactoryBean = new EmbeddedDatabaseFactoryBean();
+        embeddedDatabaseFactoryBean.setInitSqlResourcePath("classpath:schema.sql", "classpath:initSqlSchema.sql");
+        return embeddedDatabaseFactoryBean;
+    } // 통합 테스트 에러 확인 필
+
+    @Bean
+    public EmbeddedDatabase dataSource(){
+        return embeddedDatabaseFactoryBean().getObject();
+    }*/
 
     @Bean
     public RowMapper<User> userRowMapper(){

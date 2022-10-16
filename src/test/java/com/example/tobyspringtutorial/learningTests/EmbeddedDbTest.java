@@ -20,8 +20,8 @@ public class EmbeddedDbTest {
 
     @BeforeEach
     public void setUp(){
-        db = new EmbeddedDatabaseBuilder().setType(H2).addScript("classpath:schema.sql") // 테이블 생성 스크립트
-                .addScript("classpath:data.sql").build(); // 테이블 초기화 스크립트
+        db = new EmbeddedDatabaseBuilder().setType(H2).addScript("classpath:schemaForTest.sql") // 테이블 생성 스크립트
+                .addScript("classpath:dataForTest.sql").build(); // 테이블 초기화 스크립트
         template = new JdbcTemplate(db); // EmbeddedDatabase는 DataSource의 서브 인터페이스이다.
     }
 
@@ -32,9 +32,9 @@ public class EmbeddedDbTest {
 
     @Test
     public void initData(){ // 초기화 스크립트(data.sql)를 통해 등록한 데이터 검증 테스트
-        assertThat(template.queryForObject("SELECT COUNT(*) FROM SQLMAP", Integer.class)).isEqualTo(2);
+        assertThat(template.queryForObject("SELECT COUNT(*) FROM SQLMAP_", Integer.class)).isEqualTo(2);
 
-        List<Map<String, Object>> list = template.queryForList("SELECT * FROM SQLMAP ORDER BY KEY_");
+        List<Map<String, Object>> list = template.queryForList("SELECT * FROM SQLMAP_ ORDER BY KEY_");
         assertThat(list.get(0).get("KEY_")).isEqualTo("KEY1");
         assertThat(list.get(0).get("SQL_")).isEqualTo("SQL1");
         assertThat(list.get(1).get("KEY_")).isEqualTo("KEY2");
@@ -44,8 +44,8 @@ public class EmbeddedDbTest {
     @Test
     public void insert(){ // 새 데이터 추가 테스트
         // when
-        template.update("INSERT INTO SQLMAP VALUES(?, ?)", "KEY3", "SQL3");
+        template.update("INSERT INTO SQLMAP_ VALUES(?, ?)", "KEY3", "SQL3");
         // then
-        assertThat(template.queryForObject("SELECT COUNT(*) FROM SQLMAP", Integer.class)).isEqualTo(3);
+        assertThat(template.queryForObject("SELECT COUNT(*) FROM SQLMAP_", Integer.class)).isEqualTo(3);
     }
 }

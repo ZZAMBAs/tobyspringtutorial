@@ -19,7 +19,7 @@ public class BaseSqlService implements SqlService{ // SQL을 가져옴.
         this.sqlReader = sqlReader;
     }
 
-    @PostConstruct // 자바 9 이상부터 Deprecated
+    @PostConstruct
     public void loadSql(){
         sqlReader.read(this.sqlRegistry);
     }

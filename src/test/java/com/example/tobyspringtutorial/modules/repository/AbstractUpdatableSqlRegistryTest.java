@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 // ConcurrentHashMapSqlRegistry의 단위 테스트와 EmbeddedDbSqlRegistry의 단위 테스트는 매우 유사하다.
 // 따라서 공통부를 추상 클래스로 하고, 각각 구체적인 부분을 구체 테스트 클래스로 생성해 단위 테스트를 완성한다.
 public abstract class AbstractUpdatableSqlRegistryTest {
-    private UpdatableSqlRegistry sqlRegistry;
+    protected UpdatableSqlRegistry sqlRegistry;
 
     @BeforeEach
     public void setUp(){
@@ -31,7 +31,7 @@ public abstract class AbstractUpdatableSqlRegistryTest {
     }
 
     // 반복적으로 검증하는 부분을 따로 메서드로 분리하면 코드가 더 깔끔해진다.
-    private void checkFindResult(String expected1, String expected2, String expected3){
+    protected void checkFindResult(String expected1, String expected2, String expected3){
         assertThat(sqlRegistry.findSql("KEY1")).isEqualTo(expected1);
         assertThat(sqlRegistry.findSql("KEY2")).isEqualTo(expected2);
         assertThat(sqlRegistry.findSql("KEY3")).isEqualTo(expected3);
